@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateWeeklySchedule } from "@/lib/appointments";
+import { validateHomepageContent, validateInternalHolidays, validateWeeklySchedule } from "@/lib/appointments";
 import { getClinicSettings, saveClinicSettings } from "@/lib/settings";
 
 function isAuthorized(request: NextRequest) {
@@ -13,26 +13,28 @@ function jsonError(message: string, status = 400) {
 
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Vui lòng nhập đúng PIN admin", 401);
   }
 
   try {
     return NextResponse.json(await getClinicSettings());
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Invalid request", 500);
+    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ", 500);
   }
 }
 
 export async function PATCH(request: NextRequest) {
   if (!isAuthorized(request)) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Vui lòng nhập đúng PIN admin", 401);
   }
 
   try {
     const body = await request.json();
     const weeklySchedule = validateWeeklySchedule(body.weeklySchedule);
-    return NextResponse.json(await saveClinicSettings(weeklySchedule));
+    const internalHolidays = validateInternalHolidays(body.internalHolidays);
+    const homepageContent = validateHomepageContent(body.homepageContent);
+    return NextResponse.json(await saveClinicSettings({ weeklySchedule, internalHolidays, homepageContent }));
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Invalid request");
+    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
   }
 }

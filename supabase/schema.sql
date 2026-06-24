@@ -39,8 +39,32 @@ create table if not exists public.clinic_settings (
     "5": {"enabled": true, "open": "07:30", "close": "20:00"},
     "6": {"enabled": true, "open": "07:30", "close": "20:00"}
   }'::jsonb,
+  internal_holidays jsonb not null default '[]'::jsonb,
+  homepage_content jsonb not null default '{
+    "brandName": "Thanh Bình Clinic",
+    "address": "123 Nguyễn Trãi, Quận 1, TP.HCM",
+    "hotline": "028 1234 5678",
+    "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
+    "eyebrow": "Phòng khám đa khoa",
+    "headline": "Đặt lịch khám bằng số điện thoại",
+    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+  }'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+alter table public.clinic_settings
+  add column if not exists internal_holidays jsonb not null default '[]'::jsonb;
+
+alter table public.clinic_settings
+  add column if not exists homepage_content jsonb not null default '{
+    "brandName": "Thanh Bình Clinic",
+    "address": "123 Nguyễn Trãi, Quận 1, TP.HCM",
+    "hotline": "028 1234 5678",
+    "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
+    "eyebrow": "Phòng khám đa khoa",
+    "headline": "Đặt lịch khám bằng số điện thoại",
+    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+  }'::jsonb;
 
 insert into public.clinic_settings (id)
 values ('default')

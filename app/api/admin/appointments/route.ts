@@ -13,7 +13,7 @@ function jsonError(message: string, status = 400) {
 
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Vui lòng nhập đúng PIN admin", 401);
   }
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -44,16 +44,16 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   if (!isAuthorized(request)) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Vui lòng nhập đúng PIN admin", 401);
   }
 
   try {
     const body = await request.json();
-    const appointmentId = requireText(body.appointmentId, "Appointment ID");
-    const status = requireText(body.status, "Status");
+    const appointmentId = requireText(body.appointmentId, "Mã lịch hẹn");
+    const status = requireText(body.status, "Trạng thái");
 
     if (!["booked", "cancelled", "completed", "no_show"].includes(status)) {
-      return jsonError("Invalid status");
+      return jsonError("Trạng thái không hợp lệ");
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -64,7 +64,7 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (findError || !existing) {
-      return jsonError("Appointment not found", 404);
+      return jsonError("Không tìm thấy lịch hẹn", 404);
     }
 
     const { data, error } = await supabaseAdmin
@@ -86,6 +86,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ appointment: data });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Invalid request");
+    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
   }
 }
