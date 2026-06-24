@@ -36,8 +36,9 @@ export default function Home() {
 
   async function handleBooking(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setBookingState({ type: "idle", message: "" });
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
 
     const response = await fetch("/api/appointments", {
       method: "POST",
@@ -58,7 +59,7 @@ export default function Home() {
       return;
     }
 
-    event.currentTarget.reset();
+    formElement.reset();
     setBookingState({ type: "success", message: "Lịch khám đã được ghi nhận" });
   }
 
