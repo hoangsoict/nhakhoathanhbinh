@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  appointmentStartsAt,
   getAllowedAppointmentDates,
+  isAppointmentInFuture,
   isInternalHoliday,
   isThirtyMinuteSlot,
   isWithinWorkingSchedule,
-  isMoreThanHoursAway,
+  customerDailyBlockingStatuses,
   normalizePhone,
+  occupyingAppointmentStatuses,
   requirePositiveInteger,
-  requireText
+  requireText,
+  slotCapacity
 } from "@/lib/appointments";
 import { getClinicSettings } from "@/lib/settings";
 import { getSupabaseAdmin } from "@/lib/supabase";
@@ -24,6 +26,42 @@ async function addHistory(appointmentId: string, action: string, snapshot: Recor
     action,
     snapshot
   });
+}
+
+async function countOccupyingAppointments(date: string, time: string, excludeAppointmentId?: string) {
+  let query = getSupabaseAdmin()
+    .from("appointments")
+    .select("id", { count: "exact", head: true })
+    .eq("appointment_date", date)
+    .eq("appointment_time", time)
+    .in("status", occupyingAppointmentStatuses);
+
+  if (excludeAppointmentId) {
+    query = query.neq("id", excludeAppointmentId);
+  }
+
+  const { count, error } = await query;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return count ?? 0;
+}
+
+async function hasCustomerDailyBlockingAppointment(phone: string, date: string) {
+  const { count, error } = await getSupabaseAdmin()
+    .from("appointments")
+    .select("id", { count: "exact", head: true })
+    .eq("phone", phone)
+    .eq("appointment_date", date)
+    .in("status", customerDailyBlockingStatuses);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (count ?? 0) > 0;
 }
 
 export async function GET(request: NextRequest) {
@@ -67,8 +105,8 @@ export async function POST(request: NextRequest) {
       return jsonError("Giờ khám phải chọn theo khung 30 phút", 409);
     }
 
-    if (appointmentStartsAt(appointmentDate, appointmentTime).getTime() <= Date.now()) {
-      return jsonError("Giờ khám phải là thời điểm trong tương lai");
+    if (!isAppointmentInFuture(appointmentDate, appointmentTime)) {
+      return jsonError("Giờ khám phải là thời điểm trong tương lai", 409);
     }
 
     const settings = await getClinicSettings();
@@ -81,6 +119,16 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    if (await hasCustomerDailyBlockingAppointment(phone, appointmentDate)) {
+      return jsonError("Số điện thoại này đã có lịch Đã đặt hoặc Không đến trong ngày khám", 409);
+    }
+
+    const occupyingCount = await countOccupyingAppointments(appointmentDate, appointmentTime);
+
+    if (occupyingCount >= slotCapacity) {
+      return jsonError("Khung giờ này đã đủ 4 khách, vui lòng chọn giờ khác", 409);
+    }
+
     const payload = {
       full_name: fullName,
       age,
@@ -138,8 +186,8 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Chỉ có thể sửa lịch đang ở trạng thái Đã đặt", 409);
     }
 
-    if (!isMoreThanHoursAway(existing.appointment_date, existing.appointment_time, 2)) {
-      return jsonError("Chỉ có thể sửa lịch trước giờ khám hơn 2 giờ", 409);
+    if (!isAppointmentInFuture(existing.appointment_date, existing.appointment_time)) {
+      return jsonError("Lịch đã đến giờ hoặc đã qua, không thể cập nhật", 409);
     }
 
     if (![allowedDates.today, allowedDates.tomorrow].includes(appointmentDate)) {
@@ -150,8 +198,8 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Giờ khám phải chọn theo khung 30 phút", 409);
     }
 
-    if (appointmentStartsAt(appointmentDate, appointmentTime).getTime() <= Date.now()) {
-      return jsonError("Giờ khám mới phải là thời điểm trong tương lai");
+    if (!isAppointmentInFuture(appointmentDate, appointmentTime)) {
+      return jsonError("Giờ khám mới phải là thời điểm trong tương lai", 409);
     }
 
     const settings = await getClinicSettings();
@@ -161,6 +209,11 @@ export async function PATCH(request: NextRequest) {
 
     if (!isWithinWorkingSchedule(settings.weeklySchedule, appointmentDate, appointmentTime)) {
       return jsonError("Giờ khám nằm ngoài lịch làm việc của phòng khám", 409);
+    }
+
+    const occupyingCount = await countOccupyingAppointments(appointmentDate, appointmentTime, appointmentId);
+    if (occupyingCount >= slotCapacity) {
+      return jsonError("Khung giờ này đã đủ 4 khách, vui lòng chọn giờ khác", 409);
     }
 
     const { data, error } = await supabaseAdmin
@@ -213,8 +266,8 @@ export async function DELETE(request: NextRequest) {
       return jsonError("Chỉ có thể hủy lịch đang ở trạng thái Đã đặt", 409);
     }
 
-    if (!isMoreThanHoursAway(existing.appointment_date, existing.appointment_time, 2)) {
-      return jsonError("Chỉ có thể hủy lịch trước giờ khám hơn 2 giờ", 409);
+    if (!isAppointmentInFuture(existing.appointment_date, existing.appointment_time)) {
+      return jsonError("Lịch đã đến giờ hoặc đã qua, không thể hủy", 409);
     }
 
     const { data, error } = await supabaseAdmin

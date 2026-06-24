@@ -42,12 +42,13 @@ create table if not exists public.clinic_settings (
   internal_holidays jsonb not null default '[]'::jsonb,
   homepage_content jsonb not null default '{
     "brandName": "Thanh Bình Clinic",
-    "address": "123 Nguyễn Trãi, Quận 1, TP.HCM",
+    "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
     "hotline": "028 1234 5678",
     "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
     "eyebrow": "Phòng khám đa khoa",
     "headline": "Đặt lịch khám bằng số điện thoại",
-    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
+    "heroImageUrl": "/clinic-hero.png"
   }'::jsonb,
   updated_at timestamptz not null default now()
 );
@@ -58,12 +59,13 @@ alter table public.clinic_settings
 alter table public.clinic_settings
   add column if not exists homepage_content jsonb not null default '{
     "brandName": "Thanh Bình Clinic",
-    "address": "123 Nguyễn Trãi, Quận 1, TP.HCM",
+    "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
     "hotline": "028 1234 5678",
     "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
     "eyebrow": "Phòng khám đa khoa",
     "headline": "Đặt lịch khám bằng số điện thoại",
-    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
+    "heroImageUrl": "/clinic-hero.png"
   }'::jsonb;
 
 insert into public.clinic_settings (id)

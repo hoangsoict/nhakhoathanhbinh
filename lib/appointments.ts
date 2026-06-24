@@ -28,6 +28,7 @@ export type HomepageContent = {
   eyebrow: string;
   headline: string;
   description: string;
+  heroImageUrl: string;
 };
 
 export type ClinicSettings = {
@@ -36,6 +37,9 @@ export type ClinicSettings = {
   homepageContent: HomepageContent;
 };
 
+export const slotCapacity = 4;
+export const occupyingAppointmentStatuses: AppointmentStatus[] = ["booked", "completed"];
+export const customerDailyBlockingStatuses: AppointmentStatus[] = ["booked", "no_show"];
 export const dayLabels = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"] as const;
 
 export const defaultWeeklySchedule: WeeklySchedule = {
@@ -50,12 +54,13 @@ export const defaultWeeklySchedule: WeeklySchedule = {
 
 export const defaultHomepageContent: HomepageContent = {
   brandName: "Thanh Bình Clinic",
-  address: "123 Nguyễn Trãi, Quận 1, TP.HCM",
+  address: "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
   hotline: "028 1234 5678",
   hoursText: "Thứ 2 - Chủ nhật, 07:30 - 20:00",
   eyebrow: "Phòng khám đa khoa",
   headline: "Đặt lịch khám bằng số điện thoại",
-  description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+  description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
+  heroImageUrl: "/clinic-hero.png"
 };
 
 export function formatDateInVietnam(date: Date) {
@@ -124,8 +129,26 @@ export function validateHomepageContent(value: unknown): HomepageContent {
     hoursText: requireTextOrDefault(raw.hoursText, defaultHomepageContent.hoursText).slice(0, 120),
     eyebrow: requireTextOrDefault(raw.eyebrow, defaultHomepageContent.eyebrow).slice(0, 80),
     headline: requireTextOrDefault(raw.headline, defaultHomepageContent.headline).slice(0, 120),
-    description: requireTextOrDefault(raw.description, defaultHomepageContent.description).slice(0, 220)
+    description: requireTextOrDefault(raw.description, defaultHomepageContent.description).slice(0, 220),
+    heroImageUrl: validateHeroImageUrl(raw.heroImageUrl)
   };
+}
+
+function validateHeroImageUrl(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) {
+    return defaultHomepageContent.heroImageUrl;
+  }
+
+  const trimmed = value.trim();
+  if (
+    trimmed.startsWith("/") ||
+    /^https:\/\/.+/i.test(trimmed) ||
+    /^data:image\/(png|jpe?g|webp);base64,/i.test(trimmed)
+  ) {
+    return trimmed.slice(0, 1_500_000);
+  }
+
+  return defaultHomepageContent.heroImageUrl;
 }
 
 export function normalizePhone(value: string) {
@@ -190,6 +213,38 @@ export function isThirtyMinuteSlot(time: string) {
   const [hour, minute] = normalizedTime.split(":").map(Number);
 
   return Number.isInteger(hour) && Number.isInteger(minute) && hour >= 0 && hour <= 23 && [0, 30].includes(minute);
+}
+
+export function createTimeOptions(open: string, close: string, stepMinutes: number) {
+  const [openHour, openMinute] = open.split(":").map(Number);
+  const [closeHour, closeMinute] = close.split(":").map(Number);
+  const start = openHour * 60 + openMinute;
+  const end = closeHour * 60 + closeMinute;
+  const options: string[] = [];
+
+  for (let minutes = start; minutes < end; minutes += stepMinutes) {
+    const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+    const minute = String(minutes % 60).padStart(2, "0");
+    options.push(`${hour}:${minute}`);
+  }
+
+  return options;
+}
+
+export function getAvailableTimeOptionsForDate(schedule: WeeklySchedule, date: string) {
+  const workingDay = getScheduleForDate(schedule, date);
+
+  if (!workingDay.enabled) {
+    return [];
+  }
+
+  return createTimeOptions(workingDay.open, workingDay.close, 30).filter((time) => {
+    return isAppointmentInFuture(date, time);
+  });
+}
+
+export function isAppointmentInFuture(date: string, time: string) {
+  return appointmentStartsAt(date, time).getTime() > Date.now();
 }
 
 export function isMoreThanHoursAway(date: string, time: string, hours: number) {
