@@ -1,23 +1,17 @@
 "use client";
 
-import { CalendarCheck, ClipboardList, MapPin, Phone, Search, ShieldCheck, Stethoscope } from "lucide-react";
+import { CalendarCheck, ClipboardList, MapPin, Phone, Search, Stethoscope } from "lucide-react";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
-  dayLabels,
   createTimeOptions,
-  defaultHomepageContent,
-  defaultWeeklySchedule,
   getAllowedAppointmentDates,
-  getCurrentMonthDates,
   type Appointment,
   type AppointmentStatus,
-  type HomepageContent,
-  type WeeklySchedule
+  type HomepageContent
 } from "@/lib/appointments";
 
-type Tab = "booking" | "lookup" | "admin";
-type AdminSection = "appointments" | "settings" | "homepage";
+type Tab = "booking" | "lookup";
 type ApiState = { type: "idle" | "success" | "error"; message: string };
 type AppointmentSlot = {
   time: string;
@@ -37,7 +31,6 @@ const allowedDates = getAllowedAppointmentDates();
 const today = allowedDates.today;
 const tomorrow = allowedDates.tomorrow;
 const appointmentTimeOptions = createTimeOptions("07:30", "20:00", 30);
-const currentMonthDates = getCurrentMonthDates();
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("booking");
@@ -47,25 +40,14 @@ export default function Home() {
   const [bookingSlots, setBookingSlots] = useState<AppointmentSlot[]>([]);
   const [bookingSlotsState, setBookingSlotsState] = useState<ApiState>({ type: "idle", message: "" });
   const [lookupState, setLookupState] = useState<ApiState>({ type: "idle", message: "" });
-  const [adminState, setAdminState] = useState<ApiState>({ type: "idle", message: "" });
   const [lookupPhone, setLookupPhone] = useState("");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [adminAppointments, setAdminAppointments] = useState<Appointment[]>([]);
-  const [adminPin, setAdminPin] = useState("");
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [adminSection, setAdminSection] = useState<AdminSection>("appointments");
-  const [adminDate, setAdminDate] = useState(today);
-  const [adminStatus, setAdminStatus] = useState("all");
-  const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>(defaultWeeklySchedule);
-  const [internalHolidays, setInternalHolidays] = useState<string[]>([]);
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
-  const [settingsState, setSettingsState] = useState<ApiState>({ type: "idle", message: "" });
 
   const bookedAppointments = useMemo(
     () => appointments.filter((appointment) => appointment.status === "booked"),
     [appointments]
   );
-  const adminAppointmentGroups = useMemo(() => groupAppointmentsByScheduleTime(adminAppointments), [adminAppointments]);
 
   useEffect(() => {
     async function loadHomepageContent() {
@@ -233,181 +215,6 @@ export default function Home() {
     await lookup();
   }
 
-  async function unlockAdmin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAdminState({ type: "idle", message: "" });
-
-    const response = await fetch("/api/admin/settings", {
-      headers: { "x-admin-pin": adminPin }
-    });
-    const result = await readJsonResponse(response);
-
-    if (!response.ok) {
-      setAdminUnlocked(false);
-      setAdminState({ type: "error", message: result.error ?? "Không thể xác thực PIN admin" });
-      return;
-    }
-
-    setAdminUnlocked(true);
-    setWeeklySchedule(result.weeklySchedule);
-    setInternalHolidays(result.internalHolidays ?? []);
-    setHomepageContent(result.homepageContent ?? defaultHomepageContent);
-    setAdminState({ type: "success", message: "Đã mở khóa trang admin" });
-  }
-
-  function lockAdmin() {
-    setAdminUnlocked(false);
-    setAdminPin("");
-    setAdminAppointments([]);
-    setAdminState({ type: "idle", message: "" });
-    setSettingsState({ type: "idle", message: "" });
-  }
-
-  async function loadAdminAppointments(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    setAdminState({ type: "idle", message: "" });
-
-    const params = new URLSearchParams();
-    if (adminDate) params.set("date", adminDate);
-    params.set("status", adminStatus);
-
-    const response = await fetch(`/api/admin/appointments?${params.toString()}`, {
-      headers: { "x-admin-pin": adminPin }
-    });
-    const result = await readJsonResponse(response);
-
-    if (!response.ok) {
-      setAdminState({ type: "error", message: result.error ?? "Không thể tải danh sách" });
-      return;
-    }
-
-    setAdminAppointments(result.appointments);
-    setAdminState({ type: "success", message: `${result.appointments.length} lịch hẹn` });
-  }
-
-  async function setAdminAppointmentStatus(appointment: Appointment, status: AppointmentStatus) {
-    if (appointment.status === status) {
-      return;
-    }
-
-    setAdminState({ type: "idle", message: "" });
-    const response = await fetch("/api/admin/appointments", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
-      body: JSON.stringify({ appointmentId: appointment.id, status })
-    });
-    const result = await readJsonResponse(response);
-
-    if (!response.ok) {
-      setAdminState({ type: "error", message: result.error ?? "Không thể cập nhật trạng thái" });
-      return;
-    }
-
-    setAdminState({ type: "success", message: "Đã cập nhật trạng thái lịch" });
-    await loadAdminAppointments();
-  }
-
-  async function loadSettings() {
-    setSettingsState({ type: "idle", message: "" });
-    const response = await fetch("/api/admin/settings", {
-      headers: { "x-admin-pin": adminPin }
-    });
-    const result = await readJsonResponse(response);
-
-    if (!response.ok) {
-      setSettingsState({ type: "error", message: result.error ?? "Không thể tải cấu hình" });
-      return;
-    }
-
-    setWeeklySchedule(result.weeklySchedule);
-    setInternalHolidays(result.internalHolidays ?? []);
-    setHomepageContent(result.homepageContent ?? defaultHomepageContent);
-    setSettingsState({ type: "success", message: "Đã tải cấu hình lịch làm việc" });
-  }
-
-  async function saveSettings(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSettingsState({ type: "idle", message: "" });
-    const response = await fetch("/api/admin/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
-      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent: homepageContent ?? defaultHomepageContent })
-    });
-    const result = await readJsonResponse(response);
-
-    if (!response.ok) {
-      setSettingsState({ type: "error", message: result.error ?? "Không thể lưu cấu hình" });
-      return;
-    }
-
-    setWeeklySchedule(result.weeklySchedule);
-    setInternalHolidays(result.internalHolidays ?? []);
-    setHomepageContent(result.homepageContent ?? homepageContent);
-    setSettingsState({ type: "success", message: "Đã lưu cấu hình" });
-  }
-
-  function updateWorkingDay(day: string, field: "enabled" | "open" | "close", value: boolean | string) {
-    setWeeklySchedule((current) => ({
-      ...current,
-      [day]: {
-        ...current[day],
-        [field]: value
-      }
-    }));
-  }
-
-  function toggleInternalHoliday(date: string) {
-    setInternalHolidays((current) => {
-      if (current.includes(date)) {
-        return current.filter((holiday) => holiday !== date);
-      }
-
-      return [...current, date].sort();
-    });
-  }
-
-  function updateHomepageContent(field: keyof HomepageContent, value: string) {
-    setHomepageContent((current) => ({
-      ...(current ?? defaultHomepageContent),
-      [field]: value
-    }));
-  }
-
-  async function updateHomepageImage(file: File | null) {
-    if (!file) {
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setSettingsState({ type: "error", message: "Vui lòng chọn file ảnh" });
-      return;
-    }
-
-    if (file.size > 2_000_000) {
-      setSettingsState({ type: "error", message: "Ảnh trang chủ cần nhỏ hơn 2MB" });
-      return;
-    }
-
-    setSettingsState({ type: "idle", message: "Đang upload ảnh..." });
-    const formData = new FormData();
-    formData.set("image", file);
-
-    const response = await fetch("/api/admin/homepage-image", {
-      method: "POST",
-      headers: { "x-admin-pin": adminPin },
-      body: formData
-    });
-    const result = await readJsonResponse(response);
-
-    if (!response.ok) {
-      setSettingsState({ type: "error", message: result.error ?? "Không thể upload ảnh" });
-      return;
-    }
-
-    updateHomepageContent("heroImageUrl", result.imageUrl);
-    setSettingsState({ type: "success", message: "Đã upload ảnh mới, bấm lưu để áp dụng" });
-  }
-
   if (!homepageContent) {
     return (
       <main className="loadingPage">
@@ -448,10 +255,6 @@ export default function Home() {
               <button className={tab === "lookup" ? "active" : ""} onClick={() => setTab("lookup")}>
                 <Search aria-hidden="true" />
                 Tra cứu
-              </button>
-              <button className={tab === "admin" ? "active" : ""} onClick={() => setTab("admin")}>
-                <ShieldCheck aria-hidden="true" />
-                Admin
               </button>
             </div>
           </div>
@@ -564,277 +367,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {tab === "admin" && (
-          <div className="panel">
-            {!adminUnlocked && (
-              <form className="adminLogin" onSubmit={unlockAdmin}>
-                <Field
-                  label="PIN admin"
-                  name="adminPin"
-                  type="password"
-                  value={adminPin}
-                  onChange={setAdminPin}
-                  required
-                />
-                <button className="primaryAction" type="submit">
-                  <ShieldCheck aria-hidden="true" />
-                  Mở admin
-                </button>
-                <FormMessage state={adminState} />
-              </form>
-            )}
-
-            {adminUnlocked && (
-              <div className="adminWorkspace">
-                <div className="adminHeader">
-                  <div className="adminTabs" role="tablist" aria-label="Tác vụ admin">
-                    <button
-                      type="button"
-                      className={adminSection === "appointments" ? "active" : ""}
-                      onClick={() => setAdminSection("appointments")}
-                    >
-                      Danh sách đặt lịch
-                    </button>
-                    <button
-                      type="button"
-                      className={adminSection === "settings" ? "active" : ""}
-                      onClick={() => setAdminSection("settings")}
-                    >
-                      Cấu hình lịch làm việc
-                    </button>
-                    <button
-                      type="button"
-                      className={adminSection === "homepage" ? "active" : ""}
-                      onClick={() => setAdminSection("homepage")}
-                    >
-                      Thông tin trang chủ
-                    </button>
-                  </div>
-                  <button className="secondaryAction" type="button" onClick={lockAdmin}>
-                    Khóa admin
-                  </button>
-                </div>
-
-                {adminSection === "appointments" && (
-                  <>
-                    <form className="adminFilters" onSubmit={loadAdminAppointments}>
-                      <Field label="Ngày" name="adminDate" type="date" value={adminDate} onChange={setAdminDate} />
-                      <label>
-                        <span>Trạng thái</span>
-                        <select value={adminStatus} onChange={(event) => setAdminStatus(event.target.value)}>
-                          <option value="all">Tất cả</option>
-                          <option value="booked">Đã đặt</option>
-                          <option value="completed">Đã khám</option>
-                          <option value="cancelled">Đã hủy</option>
-                          <option value="no_show">Không đến</option>
-                        </select>
-                      </label>
-                      <button className="primaryAction" type="submit">
-                        <ClipboardList aria-hidden="true" />
-                        Tải lịch
-                      </button>
-                    </form>
-                    <FormMessage state={adminState} />
-
-                    <div className="tableWrap">
-                      <table className="adminAppointmentTable">
-                        <thead>
-                          <tr>
-                            <th>Khách hàng</th>
-                            <th>Điện thoại</th>
-                            <th>Lịch khám</th>
-                            <th>Đặt lúc</th>
-                            <th>Mục đích</th>
-                            <th>Trạng thái</th>
-                          </tr>
-                        </thead>
-                        {adminAppointmentGroups.map((group) => (
-                          <tbody key={group.key}>
-                            <tr className="adminGroupRow">
-                              <td colSpan={6}>
-                                <strong>{group.label}</strong>
-                                <span>{group.appointments.length} lịch</span>
-                              </td>
-                            </tr>
-                            {group.appointments.map((appointment) => (
-                              <tr key={appointment.id}>
-                                <td>
-                                  {appointment.full_name}
-                                  <br />
-                                  <span className="tableMuted">{appointment.age} tuổi</span>
-                                </td>
-                                <td>{appointment.phone}</td>
-                                <td>
-                                  {appointment.appointment_date} {appointment.appointment_time.slice(0, 5)}
-                                </td>
-                                <td>{formatDateTime(appointment.created_at)}</td>
-                                <td>{appointment.purpose}</td>
-                                <td>
-                                  <StatusSelect
-                                    name={`status-${appointment.id}`}
-                                    value={appointment.status}
-                                    onChange={(value) => setAdminAppointmentStatus(appointment, value)}
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        ))}
-                      </table>
-                    </div>
-                  </>
-                )}
-
-                {adminSection === "settings" && (
-                  <form className="settingsPanel" onSubmit={saveSettings}>
-                    <div className="settingsHeader">
-                      <strong>Cấu hình lịch làm việc</strong>
-                      <button type="button" onClick={loadSettings}>
-                        Tải cấu hình
-                      </button>
-                    </div>
-                    <div className="scheduleGrid">
-                      {dayLabels.map((label, index) => {
-                        const day = String(index);
-                        const schedule = weeklySchedule[day];
-
-                        return (
-                          <div className="scheduleRow" key={day}>
-                            <label className="checkLabel">
-                              <input
-                                type="checkbox"
-                                checked={schedule.enabled}
-                                onChange={(event) => updateWorkingDay(day, "enabled", event.target.checked)}
-                              />
-                              <span>{label}</span>
-                            </label>
-                            <Field
-                              label="Mở cửa"
-                              name={`open-${day}`}
-                              type="time"
-                              value={schedule.open}
-                              onChange={(value) => updateWorkingDay(day, "open", value)}
-                            />
-                            <Field
-                              label="Đóng cửa"
-                              name={`close-${day}`}
-                              type="time"
-                              value={schedule.close}
-                              onChange={(value) => updateWorkingDay(day, "close", value)}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="holidaySection">
-                      <strong>Ngày nghỉ nội bộ trong tháng hiện tại</strong>
-                      <div className="holidayGrid">
-                        {currentMonthDates.map((date) => (
-                          <label className="holidayItem" key={date}>
-                            <input
-                              type="checkbox"
-                              checked={internalHolidays.includes(date)}
-                              onChange={() => toggleInternalHoliday(date)}
-                            />
-                            <span>{formatShortDate(date)}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <FormMessage state={settingsState} />
-                    <button className="primaryAction" type="submit">
-                      Lưu lịch làm việc
-                    </button>
-                  </form>
-                )}
-
-                {adminSection === "homepage" && (
-                  <form className="settingsPanel" onSubmit={saveSettings}>
-                    <div className="settingsHeader">
-                      <strong>Thông tin trang chủ</strong>
-                      <button type="button" onClick={loadSettings}>
-                        Tải cấu hình
-                      </button>
-                    </div>
-                    <div className="homepageConfig">
-                      <Field
-                        label="Tên phòng khám"
-                        name="brandName"
-                        value={homepageContent.brandName}
-                        onChange={(value) => updateHomepageContent("brandName", value)}
-                        required
-                      />
-                      <Field
-                        label="Địa chỉ"
-                        name="address"
-                        value={homepageContent.address}
-                        onChange={(value) => updateHomepageContent("address", value)}
-                        required
-                      />
-                      <Field
-                        label="Hotline"
-                        name="hotline"
-                        value={homepageContent.hotline}
-                        onChange={(value) => updateHomepageContent("hotline", value)}
-                        required
-                      />
-                      <Field
-                        label="Giờ làm việc hiển thị"
-                        name="hoursText"
-                        value={homepageContent.hoursText}
-                        onChange={(value) => updateHomepageContent("hoursText", value)}
-                        required
-                      />
-                      <Field
-                        label="Nhãn nhỏ"
-                        name="eyebrow"
-                        value={homepageContent.eyebrow}
-                        onChange={(value) => updateHomepageContent("eyebrow", value)}
-                        required
-                      />
-                      <Field
-                        label="Tiêu đề chính"
-                        name="headline"
-                        value={homepageContent.headline}
-                        onChange={(value) => updateHomepageContent("headline", value)}
-                        required
-                      />
-                      <label className="wide">
-                        <span>Mô tả</span>
-                        <textarea
-                          value={homepageContent.description}
-                          onChange={(event) => updateHomepageContent("description", event.target.value)}
-                          rows={4}
-                          required
-                        />
-                      </label>
-                      <label className="wide">
-                        <span>Ảnh trang chủ</span>
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          onChange={(event) => updateHomepageImage(event.target.files?.[0] ?? null)}
-                        />
-                      </label>
-                      <div className="heroImagePreview wide">
-                        <div
-                          aria-label="Ảnh trang chủ hiện tại"
-                          role="img"
-                          style={{ backgroundImage: `url("${homepageContent.heroImageUrl}")` }}
-                        />
-                      </div>
-                    </div>
-                    <FormMessage state={settingsState} />
-                    <button className="primaryAction" type="submit">
-                      Lưu thông tin trang chủ
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </section>
     </main>
   );
@@ -918,32 +450,6 @@ function TimeSelect({
   );
 }
 
-function StatusSelect({
-  name,
-  value,
-  defaultValue,
-  onChange
-}: {
-  name: string;
-  value?: AppointmentStatus;
-  defaultValue?: AppointmentStatus;
-  onChange?: (value: AppointmentStatus) => void;
-}) {
-  return (
-    <select
-      name={name}
-      value={value}
-      defaultValue={value === undefined ? defaultValue : undefined}
-      onChange={onChange ? (event) => onChange(event.target.value as AppointmentStatus) : undefined}
-    >
-      <option value="booked">Đã đặt</option>
-      <option value="completed">Đã khám</option>
-      <option value="cancelled">Đã hủy</option>
-      <option value="no_show">Không đến</option>
-    </select>
-  );
-}
-
 function FormMessage({ state }: { state: ApiState }) {
   if (state.type === "idle" || !state.message) return null;
   return <p className={`formMessage ${state.type}`}>{state.message}</p>;
@@ -965,48 +471,4 @@ async function readJsonResponse(response: Response) {
   } catch {
     return { error: "Không thể đọc phản hồi từ máy chủ" };
   }
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("vi-VN", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(new Date(value));
-}
-
-function groupAppointmentsByScheduleTime(appointments: Appointment[]) {
-  const groups = new Map<string, { key: string; label: string; appointments: Appointment[] }>();
-
-  for (const appointment of appointments) {
-    const time = appointment.appointment_time.slice(0, 5);
-    const key = `${appointment.appointment_date} ${time}`;
-    const existing = groups.get(key);
-
-    if (existing) {
-      existing.appointments.push(appointment);
-      continue;
-    }
-
-    groups.set(key, {
-      key,
-      label: `${appointment.appointment_date} lúc ${time}`,
-      appointments: [appointment]
-    });
-  }
-
-  return Array.from(groups.values()).map((group) => ({
-    ...group,
-    appointments: group.appointments.sort((first, second) => {
-      return new Date(first.created_at).getTime() - new Date(second.created_at).getTime();
-    })
-  }));
-}
-
-function formatShortDate(date: string) {
-  const [, month, day] = date.split("-");
-  return `${day}/${month}`;
 }

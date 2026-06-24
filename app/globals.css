@@ -160,6 +160,17 @@ h1 {
   margin: -38px auto 64px;
 }
 
+.managePage {
+  width: min(1180px, calc(100% - 32px));
+  margin: 40px auto 64px;
+}
+
+.manageUser {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .infoStrip {
   display: flex;
   flex-wrap: wrap;
@@ -353,6 +364,10 @@ textarea {
 
 .adminTabs button,
 .secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 40px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -366,6 +381,11 @@ textarea {
   color: #ffffff;
   background: var(--accent);
   border-color: var(--accent);
+}
+
+.adminTabs svg {
+  width: 17px;
+  height: 17px;
 }
 
 .settingsPanel {
@@ -509,6 +529,14 @@ table {
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.userPasswordReset {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 300px;
 }
 
 th,

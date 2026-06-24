@@ -6,8 +6,7 @@ import {
   isAppointmentInFuture,
   isInternalHoliday,
   occupyingAppointmentStatuses,
-  requireText,
-  slotCapacity
+  requireText
 } from "@/lib/appointments";
 import { getClinicSettings } from "@/lib/settings";
 import { getSupabaseAdmin } from "@/lib/supabase";
@@ -70,8 +69,8 @@ export async function GET(request: NextRequest) {
       return {
         time,
         bookedCount,
-        capacity: slotCapacity,
-        available: bookedCount < slotCapacity
+        capacity: settings.slotCapacity,
+        available: bookedCount < settings.slotCapacity
       };
     });
 

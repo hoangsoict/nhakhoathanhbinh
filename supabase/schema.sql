@@ -40,6 +40,7 @@ create table if not exists public.clinic_settings (
     "6": {"enabled": true, "open": "07:30", "close": "20:00"}
   }'::jsonb,
   internal_holidays jsonb not null default '[]'::jsonb,
+  slot_capacity integer not null default 4 check (slot_capacity > 0 and slot_capacity <= 20),
   homepage_content jsonb not null default '{
     "brandName": "Thanh Bình Clinic",
     "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
@@ -68,6 +69,19 @@ alter table public.clinic_settings
     "heroImageUrl": "/clinic-hero.png"
   }'::jsonb;
 
+alter table public.clinic_settings
+  add column if not exists slot_capacity integer not null default 4;
+
+create table if not exists public.staff_users (
+  id uuid primary key default gen_random_uuid(),
+  username text not null unique,
+  password_hash text not null,
+  role text not null default 'maintain' check (role in ('maintain')),
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.clinic_settings (id)
 values ('default')
 on conflict (id) do nothing;
@@ -75,10 +89,12 @@ on conflict (id) do nothing;
 alter table public.appointments enable row level security;
 alter table public.appointment_history enable row level security;
 alter table public.clinic_settings enable row level security;
+alter table public.staff_users enable row level security;
 
 drop policy if exists "No public appointment access" on public.appointments;
 drop policy if exists "No public history access" on public.appointment_history;
 drop policy if exists "No public settings access" on public.clinic_settings;
+drop policy if exists "No public staff user access" on public.staff_users;
 
 create policy "No public appointment access"
   on public.appointments
@@ -94,6 +110,12 @@ create policy "No public history access"
 
 create policy "No public settings access"
   on public.clinic_settings
+  for all
+  using (false)
+  with check (false);
+
+create policy "No public staff user access"
+  on public.staff_users
   for all
   using (false)
   with check (false);

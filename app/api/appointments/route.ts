@@ -9,8 +9,7 @@ import {
   normalizePhone,
   occupyingAppointmentStatuses,
   requirePositiveInteger,
-  requireText,
-  slotCapacity
+  requireText
 } from "@/lib/appointments";
 import { getClinicSettings } from "@/lib/settings";
 import { getSupabaseAdmin } from "@/lib/supabase";
@@ -125,8 +124,8 @@ export async function POST(request: NextRequest) {
 
     const occupyingCount = await countOccupyingAppointments(appointmentDate, appointmentTime);
 
-    if (occupyingCount >= slotCapacity) {
-      return jsonError("Khung giờ này đã đủ 4 khách, vui lòng chọn giờ khác", 409);
+    if (occupyingCount >= settings.slotCapacity) {
+      return jsonError(`Khung giờ này đã đủ ${settings.slotCapacity} khách, vui lòng chọn giờ khác`, 409);
     }
 
     const payload = {
@@ -212,8 +211,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     const occupyingCount = await countOccupyingAppointments(appointmentDate, appointmentTime, appointmentId);
-    if (occupyingCount >= slotCapacity) {
-      return jsonError("Khung giờ này đã đủ 4 khách, vui lòng chọn giờ khác", 409);
+    if (occupyingCount >= settings.slotCapacity) {
+      return jsonError(`Khung giờ này đã đủ ${settings.slotCapacity} khách, vui lòng chọn giờ khác`, 409);
     }
 
     const { data, error } = await supabaseAdmin

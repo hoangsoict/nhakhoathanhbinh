@@ -35,9 +35,10 @@ export type ClinicSettings = {
   weeklySchedule: WeeklySchedule;
   internalHolidays: string[];
   homepageContent: HomepageContent;
+  slotCapacity: number;
 };
 
-export const slotCapacity = 4;
+export const defaultSlotCapacity = 4;
 export const occupyingAppointmentStatuses: AppointmentStatus[] = ["booked", "completed"];
 export const customerDailyBlockingStatuses: AppointmentStatus[] = ["booked", "no_show"];
 export const dayLabels = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"] as const;
@@ -132,6 +133,16 @@ export function validateHomepageContent(value: unknown): HomepageContent {
     description: requireTextOrDefault(raw.description, defaultHomepageContent.description).slice(0, 220),
     heroImageUrl: validateHeroImageUrl(raw.heroImageUrl)
   };
+}
+
+export function validateSlotCapacity(value: unknown) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
+    return defaultSlotCapacity;
+  }
+
+  return parsed;
 }
 
 function validateHeroImageUrl(value: unknown) {

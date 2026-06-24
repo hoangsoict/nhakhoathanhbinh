@@ -1,8 +1,10 @@
 import {
   defaultWeeklySchedule,
   defaultHomepageContent,
+  defaultSlotCapacity,
   validateInternalHolidays,
   validateHomepageContent,
+  validateSlotCapacity,
   validateWeeklySchedule,
   type ClinicSettings
 } from "@/lib/appointments";
@@ -14,7 +16,7 @@ export async function getClinicSettings() {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from("clinic_settings")
-    .select("weekly_schedule, internal_holidays, homepage_content")
+    .select("weekly_schedule, internal_holidays, homepage_content, slot_capacity")
     .eq("id", SETTINGS_ID)
     .maybeSingle();
 
@@ -23,14 +25,19 @@ export async function getClinicSettings() {
       return {
         weeklySchedule: defaultWeeklySchedule,
         internalHolidays: [],
-        homepageContent: defaultHomepageContent
+        homepageContent: defaultHomepageContent,
+        slotCapacity: defaultSlotCapacity
       };
     }
 
-    if (error.message.includes("internal_holidays") || error.message.includes("homepage_content")) {
+    if (
+      error.message.includes("internal_holidays") ||
+      error.message.includes("homepage_content") ||
+      error.message.includes("slot_capacity")
+    ) {
       const { data: legacyData, error: legacyError } = await supabaseAdmin
         .from("clinic_settings")
-        .select("weekly_schedule")
+        .select("weekly_schedule, internal_holidays, homepage_content")
         .eq("id", SETTINGS_ID)
         .maybeSingle();
 
@@ -42,8 +49,9 @@ export async function getClinicSettings() {
         weeklySchedule: legacyData?.weekly_schedule
           ? validateWeeklySchedule(legacyData.weekly_schedule)
           : defaultWeeklySchedule,
-        internalHolidays: [],
-        homepageContent: defaultHomepageContent
+        internalHolidays: validateInternalHolidays(legacyData?.internal_holidays),
+        homepageContent: validateHomepageContent(legacyData?.homepage_content),
+        slotCapacity: defaultSlotCapacity
       };
     }
 
@@ -55,7 +63,8 @@ export async function getClinicSettings() {
       ? validateWeeklySchedule(data.weekly_schedule)
       : defaultWeeklySchedule,
     internalHolidays: validateInternalHolidays(data?.internal_holidays),
-    homepageContent: validateHomepageContent(data?.homepage_content)
+    homepageContent: validateHomepageContent(data?.homepage_content),
+    slotCapacity: validateSlotCapacity(data?.slot_capacity)
   };
 }
 
@@ -69,15 +78,20 @@ export async function saveClinicSettings(settings: ClinicSettings) {
         weekly_schedule: settings.weeklySchedule,
         internal_holidays: settings.internalHolidays,
         homepage_content: settings.homepageContent,
+        slot_capacity: settings.slotCapacity,
         updated_at: new Date().toISOString()
       },
       { onConflict: "id" }
     )
-    .select("weekly_schedule, internal_holidays, homepage_content")
+    .select("weekly_schedule, internal_holidays, homepage_content, slot_capacity")
     .single();
 
   if (error) {
-    if (error.message.includes("internal_holidays") || error.message.includes("homepage_content")) {
+    if (
+      error.message.includes("internal_holidays") ||
+      error.message.includes("homepage_content") ||
+      error.message.includes("slot_capacity")
+    ) {
       throw new Error("Vui lòng chạy lại schema Supabase để bổ sung các cột cấu hình mới");
     }
 
@@ -87,6 +101,7 @@ export async function saveClinicSettings(settings: ClinicSettings) {
   return {
     weeklySchedule: validateWeeklySchedule(data.weekly_schedule),
     internalHolidays: validateInternalHolidays(data.internal_holidays),
-    homepageContent: validateHomepageContent(data.homepage_content)
+    homepageContent: validateHomepageContent(data.homepage_content),
+    slotCapacity: validateSlotCapacity(data.slot_capacity)
   };
 }

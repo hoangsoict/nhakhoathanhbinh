@@ -6,12 +6,8 @@ import {
   requireText,
   type AppointmentStatus
 } from "@/lib/appointments";
+import { requireStaff } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
-
-function isAuthorized(request: NextRequest) {
-  const adminPin = process.env.ADMIN_PIN;
-  return Boolean(adminPin && request.headers.get("x-admin-pin") === adminPin);
-}
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -56,8 +52,10 @@ function parseAppointmentPayload(body: Record<string, unknown>) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return jsonError("Vui lòng nhập đúng PIN admin", 401);
+  try {
+    requireStaff(request, ["admin", "maintain"]);
+  } catch {
+    return jsonError("Vui lòng đăng nhập tài khoản nội bộ", 401);
   }
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -88,11 +86,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return jsonError("Vui lòng nhập đúng PIN admin", 401);
-  }
-
   try {
+    requireStaff(request, ["admin"]);
     const body = await request.json();
     const payload = parseAppointmentPayload(body);
     const supabaseAdmin = getSupabaseAdmin();
@@ -119,16 +114,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ appointment: data }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return jsonError("Vui lòng đăng nhập bằng tài khoản admin", 401);
+    }
+
     return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
   }
 }
 
 export async function PATCH(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return jsonError("Vui lòng nhập đúng PIN admin", 401);
-  }
-
   try {
+    const session = requireStaff(request, ["admin", "maintain"]);
     const body = await request.json();
     const appointmentId = requireText(body.appointmentId, "Mã lịch hẹn");
 
@@ -146,6 +142,10 @@ export async function PATCH(request: NextRequest) {
     const hasAppointmentFields = ["fullName", "age", "phone", "appointmentDate", "appointmentTime", "purpose"].some(
       (field) => field in body
     );
+    if (session.role === "maintain" && hasAppointmentFields) {
+      return jsonError("Tài khoản maintain chỉ được cập nhật trạng thái", 403);
+    }
+
     const payload = hasAppointmentFields
       ? parseAppointmentPayload({ ...body, status: body.status ?? existing.status })
       : { status: parseStatus(body.status) };
@@ -173,6 +173,10 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ appointment: data });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return jsonError("Vui lòng đăng nhập tài khoản nội bộ", 401);
+    }
+
     return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
   }
 }

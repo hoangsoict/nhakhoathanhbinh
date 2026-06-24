@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không tạo tài khoản, không đăng nhập, không dùng mã lịch hẹn; mọi thao tác công khai dùng số điện thoại để đặt, tra cứu, sửa và hủy lịch. Admin/Lễ tân dùng khu vực nội bộ để xem lịch, đổi trạng thái, cấu hình lịch làm việc, ngày nghỉ nội bộ và thông tin trang chủ.
+Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không tạo tài khoản, không đăng nhập, không dùng mã lịch hẹn; mọi thao tác công khai dùng số điện thoại để đặt, tra cứu, sửa và hủy lịch. Khu vực nội bộ ở `/manage` dùng user/pass và role `admin`/`maintain`.
 
 ## Tech Stack
 
@@ -14,11 +14,14 @@ Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không
 
 ## Important Files
 
-- `app/page.tsx`: UI khách hàng và Admin.
+- `app/page.tsx`: UI khách hàng.
+- `app/manage/page.tsx`: UI nội bộ `/manage`.
 - `app/globals.css`: style chính.
 - `app/api/appointments/route.ts`: API khách đặt/tra cứu/sửa/hủy.
 - `app/api/admin/appointments/route.ts`: API Admin danh sách và cập nhật trạng thái.
 - `app/api/admin/settings/route.ts`: API Admin cấu hình.
+- `app/api/admin/session/route.ts`: API đăng nhập nội bộ.
+- `app/api/admin/users/route.ts`: API Admin quản lý user `maintain`.
 - `app/api/settings/homepage/route.ts`: API public thông tin trang chủ.
 - `lib/appointments.ts`: types và validate nghiệp vụ.
 - `lib/settings.ts`: đọc/lưu cấu hình clinic.
@@ -31,13 +34,14 @@ Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không
 - Khách hàng không cần tài khoản, không đăng nhập.
 - Không dùng mã lịch hẹn cho khách.
 - Khách dùng số điện thoại để đặt, tra cứu, sửa, hủy.
-- Admin/Lễ tân có quyền tạo lịch, sửa lịch và cập nhật trạng thái không phụ thuộc giới hạn ngày/giờ dành cho khách.
+- Role `maintain` chỉ xem danh sách đặt lịch và cập nhật trạng thái.
+- Role `admin` xem/cập nhật danh sách đặt lịch, cấu hình lịch làm việc, thông tin trang chủ, số khách tối đa mỗi ca, và quản lý user `maintain`.
 - `appointments.created_at` là thời điểm đặt lịch thực tế, dùng để ưu tiên khách đặt trước trong cùng giờ khám.
 - Ảnh trang chủ upload qua Admin lưu ở Supabase Storage bucket public `clinic-assets`; config chỉ lưu URL trong `homepage_content.heroImageUrl`.
 - Mỗi số điện thoại tối đa 01 lịch `Đã đặt` trong cùng ngày khám.
 - Nếu khách đã có lịch `Đã đặt` hoặc `Không đến` trong ngày khám thì không cho đặt lại ngày đó.
 - Mỗi ca khám dài 30 phút.
-- Mỗi ca tối đa 04 khách hàng: chưa implement, cần ưu tiên.
+- Mỗi ca tối đa theo cấu hình `slot_capacity`, mặc định 04 khách.
 - Lịch `Đã hủy` không chiếm slot.
 - Lịch `Đã đặt`, `Đã đến`, `Hoàn thành` chiếm slot.
 - Khách chỉ đặt/sửa sang giờ khám chưa qua.
@@ -48,9 +52,9 @@ Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không
 ## Current Gaps
 
 - Chưa có trạng thái `arrived`/`Đã đến`; code hiện có `booked`, `cancelled`, `completed`, `no_show`.
-- Chưa enforce tối đa 04 khách/slot.
+- Giới hạn khách/slot đã enforce ở API nhưng chưa có transaction/constraint chống race condition tuyệt đối.
 - Chưa có UI xem lịch sử thao tác.
-- Admin hiện dùng `ADMIN_PIN`, chưa có auth/session thật.
+- Admin root dùng `ADMIN_USERNAME`/`ADMIN_PASSWORD`; local còn fallback `ADMIN_PIN` nếu chưa đổi env.
 - Chưa có OTP xác minh số điện thoại.
 - Chưa có test tự động.
 
@@ -61,9 +65,11 @@ Required names only; never commit real values:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DATABASE_URL`
-- `ADMIN_PIN`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
 
-Never write real GitHub tokens, Supabase service/secret keys, database passwords, cookies, or real admin PIN into files.
+Never write real GitHub tokens, Supabase service/secret keys, database passwords, cookies, real admin passwords, or real admin PIN into files.
 
 ## Local Commands
 
@@ -98,4 +104,4 @@ PATH=/t24/nhakhoathanhbinh/.tools/node/bin:$PATH npm run dev
 - After frontend/API changes, run `npm run lint` and `npm run build` when feasible.
 - If `next dev` is running, stop it before `next build` or restart cleanly afterward.
 - Preserve Vietnamese user-facing copy and errors unless asked otherwise.
-- Keep admin-only operations behind server routes and PIN/auth checks.
+- Keep admin-only operations behind server routes and role auth checks.

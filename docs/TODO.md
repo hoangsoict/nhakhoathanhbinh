@@ -9,6 +9,8 @@
 - [x] Unique index: mỗi số điện thoại tối đa 1 lịch `booked` trong cùng ngày khám.
 - [x] Thêm `internal_holidays` vào `clinic_settings`.
 - [x] Thêm `homepage_content` vào `clinic_settings`.
+- [x] Thêm `slot_capacity` vào `clinic_settings`.
+- [x] Thêm bảng `staff_users` cho user `maintain`.
 - [ ] Chạy lại `supabase/schema.sql` trên Supabase production sau các thay đổi schema mới.
 - [ ] Thêm trạng thái `arrived` cho `Đã đến`.
 - [ ] Thiết kế transaction hoặc constraint database để giới hạn chắc tối đa 04 khách/slot 30 phút khi có request đồng thời.
@@ -28,10 +30,13 @@
 - [x] API Admin đọc/lưu cấu hình lịch làm việc.
 - [x] API Admin đọc/lưu ngày nghỉ nội bộ.
 - [x] API Admin đọc/lưu thông tin trang chủ.
+- [x] API đăng nhập nội bộ user/pass.
+- [x] API Admin quản lý user `maintain`.
+- [x] API Admin đọc/lưu số khách tối đa mỗi ca.
 - [x] API public đọc thông tin trang chủ.
 - [ ] API đọc lịch sử thao tác theo số điện thoại hoặc theo lịch hẹn.
 - [x] API public đọc slot khả dụng theo ngày và số khách đã đặt từng slot.
-- [x] API enforce tối đa 04 khách/slot.
+- [x] API enforce tối đa khách/slot theo cấu hình admin.
 - [ ] Chuẩn hóa toàn bộ lỗi Supabase sang tiếng Việt.
 - [ ] Thêm rate limit cho API công khai.
 
@@ -52,16 +57,20 @@
 - [x] Chỉ hiển thị giờ khám theo lịch làm việc/ngày nghỉ của ngày đã chọn.
 - [x] Ẩn các giờ đã qua trong ngày hiện tại.
 - [x] Hiển thị số khách đã đặt theo từng giờ dạng `x/4 khách`.
-- [x] Hiển thị lỗi rõ khi slot đủ 04 khách.
+- [x] Hiển thị lỗi rõ khi slot đủ khách theo cấu hình.
 - [ ] Cân nhắc OTP/xác minh số điện thoại.
 - [ ] Cải thiện UX khi số điện thoại có nhiều lịch cũ.
 
-## Giao Diện Lễ Tân/Admin
+## Giao Diện Nội Bộ `/manage`
 
-- [x] Trang Admin chỉ hiện tác vụ sau khi nhập PIN.
+- [x] Tách trang nội bộ khỏi trang chính, dùng `/manage`.
+- [x] Đăng nhập nội bộ bằng user/pass.
+- [x] Role `maintain` chỉ có danh sách đặt lịch và cập nhật trạng thái.
+- [x] Role `admin` có danh sách đặt lịch, cấu hình lịch làm việc, thông tin trang chủ, quản lý user maintain.
 - [x] Tab `Danh sách đặt lịch`.
 - [x] Tab `Cấu hình lịch làm việc`.
 - [x] Tab `Thông tin trang chủ`.
+- [x] Tab `User maintain`.
 - [x] Admin đổi trạng thái trực tiếp bằng dropdown trong bảng.
 - [x] Cấu hình ngày nghỉ nội bộ trong tháng hiện tại.
 - [x] Cấu hình nội dung trang chủ.
@@ -69,8 +78,11 @@
 - [x] Danh sách Admin giữ dạng bảng, mỗi lịch là một dòng.
 - [x] Danh sách Admin gom các lịch cùng mốc khám vào một cụm.
 - [x] Hiển thị thời điểm đặt lịch thực tế để ưu tiên khách đặt trước.
-- [ ] Đăng nhập nội bộ thật thay cho PIN tĩnh.
-- [ ] Phân quyền Admin/Lễ tân nếu cần.
+- [x] Admin tạo user maintain.
+- [x] Admin disable/enable user maintain.
+- [x] Admin đặt lại mật khẩu user maintain.
+- [x] Admin xóa user maintain.
+- [x] Admin cấu hình số khách tối đa mỗi ca.
 - [ ] UI xem lịch sử tạo/sửa/hủy/cập nhật trạng thái.
 - [ ] Bộ lọc theo số điện thoại, tên khách, khoảng ngày.
 
@@ -87,7 +99,7 @@
 - [x] Lịch đã đến giờ hoặc đã qua không cho khách cập nhật hoặc hủy.
 - [x] Chặn đặt/sửa ngoài lịch làm việc.
 - [x] Chặn đặt/sửa vào ngày nghỉ nội bộ.
-- [x] Mỗi ca tối đa 04 khách hàng ở API đặt/sửa.
+- [x] Mỗi ca tối đa theo cấu hình admin ở API đặt/sửa.
 - [x] Lịch `Đã hủy` không chiếm slot khi tính sức chứa.
 - [ ] Lịch `Đã đặt`, `Đã đến`, `Hoàn thành` chiếm slot.
 - [ ] Trạng thái `Đã đến` chưa có trong code.
@@ -96,7 +108,7 @@
 
 - [x] Repo đã push GitHub.
 - [x] Project đã import vào Vercel theo trao đổi.
-- [ ] Đảm bảo Vercel có đủ env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `ADMIN_PIN`.
+- [ ] Đảm bảo Vercel có đủ env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`.
 - [ ] Redeploy sau khi cập nhật Supabase schema.
 - [ ] Kiểm tra URL `.vercel.app` sau deploy.
 
@@ -115,8 +127,8 @@
 - [x] `.env.local` không commit.
 - [x] `.env.example` chỉ chứa placeholder.
 - [x] Service role key chỉ dùng server-side.
-- [x] Admin UI ẩn tác vụ trước khi nhập PIN.
-- [ ] Thay PIN tĩnh bằng auth/session nếu triển khai thật.
+- [x] Trang `/manage` yêu cầu đăng nhập user/pass.
+- [x] API nội bộ kiểm tra token và role.
 - [ ] OTP hoặc xác minh số điện thoại để giảm rủi ro xem lịch người khác.
 - [ ] Rate limit API đặt/tra cứu/sửa/hủy.
 - [ ] Audit log đầy đủ và UI xem audit.
@@ -137,6 +149,6 @@
 - [ ] Kiểm tra `git status`.
 - [ ] Chạy `npm run lint`.
 - [ ] Chạy `npm run build`.
-- [ ] Chạy lại `supabase/schema.sql` trên Supabase nếu chưa chạy sau khi thêm `internal_holidays` và `homepage_content`.
-- [x] Implement rule 04 khách/slot ở API đặt/sửa.
+- [ ] Chạy lại `supabase/schema.sql` trên Supabase nếu chưa chạy sau khi thêm `slot_capacity` và `staff_users`.
+- [x] Implement rule giới hạn khách/slot theo cấu hình ở API đặt/sửa.
 - [ ] Thêm trạng thái `arrived`/`Đã đến`.

@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireStaff } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
 const bucketName = "clinic-assets";
 const maxImageSizeBytes = 2 * 1024 * 1024;
-
-function isAuthorized(request: NextRequest) {
-  const adminPin = process.env.ADMIN_PIN;
-  return Boolean(adminPin && request.headers.get("x-admin-pin") === adminPin);
-}
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return jsonError("Vui lòng nhập đúng PIN admin", 401);
-  }
-
   try {
+    requireStaff(request, ["admin"]);
     const formData = await request.formData();
     const file = formData.get("image");
 
@@ -49,6 +42,10 @@ export async function POST(request: NextRequest) {
     const { data } = supabaseAdmin.storage.from(bucketName).getPublicUrl(filePath);
     return NextResponse.json({ imageUrl: data.publicUrl });
   } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return jsonError("Vui lòng đăng nhập bằng tài khoản admin", 401);
+    }
+
     return jsonError(error instanceof Error ? error.message : "Không thể upload ảnh");
   }
 }
