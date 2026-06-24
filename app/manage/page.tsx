@@ -529,10 +529,10 @@ export default function ManagePage() {
                   <tbody>
                     {users.map((user) => (
                       <tr key={user.id}>
-                        <td>{user.username}</td>
-                        <td>{user.active ? "Đang bật" : "Đã tắt"}</td>
-                        <td>{formatDateTime(user.created_at)}</td>
-                        <td>
+                        <td data-label="User">{user.username}</td>
+                        <td data-label="Trạng thái">{user.active ? "Đang bật" : "Đã tắt"}</td>
+                        <td data-label="Ngày tạo">{formatDateTime(user.created_at)}</td>
+                        <td data-label="Đặt lại pass">
                           <div className="userPasswordReset">
                             <input
                               aria-label={`Mật khẩu mới cho ${user.username}`}
@@ -552,7 +552,7 @@ export default function ManagePage() {
                             </button>
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Thao tác">
                           <div className="buttonRow">
                             <button type="button" onClick={() => setMaintainUserActive(user, !user.active)}>
                               {user.active ? "Disable" : "Enable"}
@@ -605,18 +605,18 @@ function AppointmentTable({
             </tr>
             {group.appointments.map((appointment) => (
               <tr key={appointment.id}>
-                <td>
+                <td data-label="Khách hàng">
                   {appointment.full_name}
                   <br />
                   <span className="tableMuted">{appointment.age} tuổi</span>
                 </td>
-                <td>{appointment.phone}</td>
-                <td>
+                <td data-label="Điện thoại">{appointment.phone}</td>
+                <td data-label="Lịch khám">
                   {appointment.appointment_date} {appointment.appointment_time.slice(0, 5)}
                 </td>
-                <td>{formatDateTime(appointment.created_at)}</td>
-                <td>{appointment.purpose}</td>
-                <td>
+                <td data-label="Đặt lúc">{formatDateTime(appointment.created_at)}</td>
+                <td data-label="Mục đích">{appointment.purpose}</td>
+                <td data-label="Trạng thái">
                   <StatusSelect
                     name={`status-${appointment.id}`}
                     value={appointment.status}
