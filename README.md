@@ -1,6 +1,6 @@
 # Phòng Khám Đa Khoa Thanh Bình
 
-Next.js app cho quy trình đặt lịch không cần tài khoản: khách dùng số điện thoại để đặt, tra cứu, sửa và hủy lịch. Admin/lễ tân quản lý lịch bằng PIN nội bộ.
+Next.js app cho quy trình đặt lịch không cần tài khoản: khách dùng số điện thoại để đặt, tra cứu, sửa và hủy lịch. Admin quản lý lịch, trạng thái và cấu hình ngày/giờ làm việc bằng PIN nội bộ.
 
 ## Stack
 
@@ -40,6 +40,8 @@ ADMIN_PIN=...
 2. Mở SQL Editor.
 3. Chạy nội dung trong `supabase/schema.sql`.
 4. Copy Project URL, service role key hoặc secret key, và database connection string.
+
+Nếu database đã được tạo từ phiên bản trước, chạy lại `supabase/schema.sql` để bổ sung bảng cấu hình ngày/giờ làm việc. Script dùng `if not exists` nên có thể chạy lại.
 
 Ứng dụng chỉ gọi Supabase từ server route bằng service role key hoặc secret key. Không đưa service role key/secret key vào biến `NEXT_PUBLIC_*`.
 

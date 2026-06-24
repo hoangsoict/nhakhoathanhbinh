@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   appointmentStartsAt,
+  isWithinWorkingSchedule,
   isMoreThanHoursAway,
   normalizePhone,
   requirePositiveInteger,
   requireText
 } from "@/lib/appointments";
+import { getClinicSettings } from "@/lib/settings";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
 function jsonError(message: string, status = 400) {
@@ -55,6 +57,11 @@ export async function POST(request: NextRequest) {
 
     if (appointmentStartsAt(appointmentDate, appointmentTime).getTime() <= Date.now()) {
       return jsonError("Appointment must be in the future");
+    }
+
+    const settings = await getClinicSettings();
+    if (!isWithinWorkingSchedule(settings.weeklySchedule, appointmentDate, appointmentTime)) {
+      return jsonError("Appointment time is outside clinic working hours", 409);
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -120,6 +127,11 @@ export async function PATCH(request: NextRequest) {
 
     if (appointmentStartsAt(appointmentDate, appointmentTime).getTime() <= Date.now()) {
       return jsonError("New appointment time must be in the future");
+    }
+
+    const settings = await getClinicSettings();
+    if (!isWithinWorkingSchedule(settings.weeklySchedule, appointmentDate, appointmentTime)) {
+      return jsonError("Appointment time is outside clinic working hours", 409);
     }
 
     const { data, error } = await supabaseAdmin

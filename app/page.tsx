@@ -3,7 +3,13 @@
 import { CalendarCheck, ClipboardList, MapPin, Phone, Search, ShieldCheck, Stethoscope } from "lucide-react";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useMemo, useState } from "react";
-import type { Appointment, AppointmentStatus } from "@/lib/appointments";
+import {
+  dayLabels,
+  defaultWeeklySchedule,
+  type Appointment,
+  type AppointmentStatus,
+  type WeeklySchedule
+} from "@/lib/appointments";
 
 type Tab = "booking" | "lookup" | "admin";
 type ApiState = { type: "idle" | "success" | "error"; message: string };
@@ -28,6 +34,8 @@ export default function Home() {
   const [adminPin, setAdminPin] = useState("");
   const [adminDate, setAdminDate] = useState(today);
   const [adminStatus, setAdminStatus] = useState("all");
+  const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>(defaultWeeklySchedule);
+  const [settingsState, setSettingsState] = useState<ApiState>({ type: "idle", message: "" });
 
   const bookedAppointments = useMemo(
     () => appointments.filter((appointment) => appointment.status === "booked"),
@@ -163,6 +171,51 @@ export default function Home() {
     }
 
     await loadAdminAppointments();
+  }
+
+  async function loadSettings() {
+    setSettingsState({ type: "idle", message: "" });
+    const response = await fetch("/api/admin/settings", {
+      headers: { "x-admin-pin": adminPin }
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      setSettingsState({ type: "error", message: result.error ?? "Không thể tải cấu hình" });
+      return;
+    }
+
+    setWeeklySchedule(result.weeklySchedule);
+    setSettingsState({ type: "success", message: "Đã tải cấu hình lịch làm việc" });
+  }
+
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSettingsState({ type: "idle", message: "" });
+    const response = await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
+      body: JSON.stringify({ weeklySchedule })
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      setSettingsState({ type: "error", message: result.error ?? "Không thể lưu cấu hình" });
+      return;
+    }
+
+    setWeeklySchedule(result.weeklySchedule);
+    setSettingsState({ type: "success", message: "Đã lưu lịch làm việc" });
+  }
+
+  function updateWorkingDay(day: string, field: "enabled" | "open" | "close", value: boolean | string) {
+    setWeeklySchedule((current) => ({
+      ...current,
+      [day]: {
+        ...current[day],
+        [field]: value
+      }
+    }));
   }
 
   return (
@@ -334,6 +387,51 @@ export default function Home() {
                 </tbody>
               </table>
             </div>
+            <form className="settingsPanel" onSubmit={saveSettings}>
+              <div className="settingsHeader">
+                <strong>Cấu hình lịch làm việc</strong>
+                <button type="button" onClick={loadSettings}>
+                  Tải cấu hình
+                </button>
+              </div>
+              <div className="scheduleGrid">
+                {dayLabels.map((label, index) => {
+                  const day = String(index);
+                  const schedule = weeklySchedule[day];
+
+                  return (
+                    <div className="scheduleRow" key={day}>
+                      <label className="checkLabel">
+                        <input
+                          type="checkbox"
+                          checked={schedule.enabled}
+                          onChange={(event) => updateWorkingDay(day, "enabled", event.target.checked)}
+                        />
+                        <span>{label}</span>
+                      </label>
+                      <Field
+                        label="Mở cửa"
+                        name={`open-${day}`}
+                        type="time"
+                        value={schedule.open}
+                        onChange={(value) => updateWorkingDay(day, "open", value)}
+                      />
+                      <Field
+                        label="Đóng cửa"
+                        name={`close-${day}`}
+                        type="time"
+                        value={schedule.close}
+                        onChange={(value) => updateWorkingDay(day, "close", value)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <FormMessage state={settingsState} />
+              <button className="primaryAction" type="submit">
+                Lưu lịch làm việc
+              </button>
+            </form>
           </div>
         )}
       </section>

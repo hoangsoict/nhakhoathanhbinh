@@ -28,11 +28,31 @@ create table if not exists public.appointment_history (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.clinic_settings (
+  id text primary key default 'default',
+  weekly_schedule jsonb not null default '{
+    "0": {"enabled": false, "open": "07:30", "close": "20:00"},
+    "1": {"enabled": true, "open": "07:30", "close": "20:00"},
+    "2": {"enabled": true, "open": "07:30", "close": "20:00"},
+    "3": {"enabled": true, "open": "07:30", "close": "20:00"},
+    "4": {"enabled": true, "open": "07:30", "close": "20:00"},
+    "5": {"enabled": true, "open": "07:30", "close": "20:00"},
+    "6": {"enabled": true, "open": "07:30", "close": "20:00"}
+  }'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.clinic_settings (id)
+values ('default')
+on conflict (id) do nothing;
+
 alter table public.appointments enable row level security;
 alter table public.appointment_history enable row level security;
+alter table public.clinic_settings enable row level security;
 
 drop policy if exists "No public appointment access" on public.appointments;
 drop policy if exists "No public history access" on public.appointment_history;
+drop policy if exists "No public settings access" on public.clinic_settings;
 
 create policy "No public appointment access"
   on public.appointments
@@ -42,6 +62,12 @@ create policy "No public appointment access"
 
 create policy "No public history access"
   on public.appointment_history
+  for all
+  using (false)
+  with check (false);
+
+create policy "No public settings access"
+  on public.clinic_settings
   for all
   using (false)
   with check (false);

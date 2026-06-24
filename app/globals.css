@@ -297,6 +297,64 @@ textarea {
   border-radius: 8px;
 }
 
+.settingsPanel {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.settingsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settingsHeader strong {
+  font-size: 1.05rem;
+}
+
+.settingsHeader button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--accent-strong);
+  background: #ffffff;
+  font-weight: 700;
+}
+
+.scheduleGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.scheduleRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 150px 150px;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.checkLabel input {
+  width: 18px;
+  min-height: 18px;
+  padding: 0;
+}
+
 table {
   width: 100%;
   min-width: 780px;
@@ -330,7 +388,8 @@ tr:last-child td {
 
   .formGrid,
   .editGrid,
-  .adminFilters {
+  .adminFilters,
+  .scheduleRow {
     grid-template-columns: 1fr;
   }
 
@@ -338,5 +397,10 @@ tr:last-child td {
   .buttonRow,
   .buttonRow button {
     width: 100%;
+  }
+
+  .settingsHeader {
+    align-items: stretch;
+    display: grid;
   }
 }
