@@ -12,11 +12,11 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function GET(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   if (!isAuthorized(request)) {
     return jsonError("Unauthorized", 401);
   }
 
+  const supabaseAdmin = getSupabaseAdmin();
   const date = request.nextUrl.searchParams.get("date");
   const status = request.nextUrl.searchParams.get("status");
 
@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   if (!isAuthorized(request)) {
     return jsonError("Unauthorized", 401);
   }
@@ -57,6 +56,7 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Invalid status");
     }
 
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: existing, error: findError } = await supabaseAdmin
       .from("appointments")
       .select("*")

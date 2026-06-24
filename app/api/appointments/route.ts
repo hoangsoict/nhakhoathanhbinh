@@ -22,12 +22,12 @@ async function addHistory(appointmentId: string, action: string, snapshot: Recor
 }
 
 export async function GET(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   const phone = normalizePhone(request.nextUrl.searchParams.get("phone") ?? "");
   if (!phone) {
     return jsonError("Phone is required");
   }
 
+  const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from("appointments")
     .select("*")
@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const body = await request.json();
     const fullName = requireText(body.fullName, "Full name");
@@ -58,6 +57,7 @@ export async function POST(request: NextRequest) {
       return jsonError("Appointment must be in the future");
     }
 
+    const supabaseAdmin = getSupabaseAdmin();
     const payload = {
       full_name: fullName,
       age,
@@ -90,7 +90,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const body = await request.json();
     const phone = normalizePhone(requireText(body.phone, "Phone"));
@@ -99,6 +98,7 @@ export async function PATCH(request: NextRequest) {
     const appointmentTime = requireText(body.appointmentTime, "Appointment time");
     const purpose = requireText(body.purpose, "Purpose");
 
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: existing, error: findError } = await supabaseAdmin
       .from("appointments")
       .select("*")
@@ -151,12 +151,12 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const body = await request.json();
     const phone = normalizePhone(requireText(body.phone, "Phone"));
     const appointmentId = requireText(body.appointmentId, "Appointment ID");
 
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: existing, error: findError } = await supabaseAdmin
       .from("appointments")
       .select("*")
