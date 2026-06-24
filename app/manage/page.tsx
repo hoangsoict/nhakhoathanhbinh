@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, ImageUp, Settings, ShieldCheck, Users } from "lucide-react";
+import { ClipboardList, ImageUp, Settings, ShieldCheck, Trash2, Users } from "lucide-react";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useMemo, useState } from "react";
 import {
@@ -50,6 +50,9 @@ export default function ManagePage() {
   const [userPasswordDrafts, setUserPasswordDrafts] = useState<Record<string, string>>({});
 
   const appointmentGroups = useMemo(() => groupAppointmentsByScheduleTime(appointments), [appointments]);
+  const homepageImageUrls = useMemo(() => {
+    return homepageContent.heroImageUrls?.length ? homepageContent.heroImageUrls : [homepageContent.heroImageUrl];
+  }, [homepageContent]);
   const isAdmin = role === "admin";
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -193,39 +196,103 @@ export default function ManagePage() {
     });
   }
 
-  function updateHomepageContent(field: keyof HomepageContent, value: string) {
+  function updateHomepageContent<K extends keyof HomepageContent>(field: K, value: HomepageContent[K]) {
     setHomepageContent((current) => ({ ...current, [field]: value }));
   }
 
-  async function updateHomepageImage(file: File | null) {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
+  function setHomepageImages(imageUrls: string[]) {
+    const nextImageUrls = imageUrls.length ? imageUrls : defaultHomepageContent.heroImageUrls;
+    setHomepageContent((current) => ({
+      ...current,
+      heroImageUrl: nextImageUrls[0],
+      heroImageUrls: nextImageUrls
+    }));
+  }
+
+  async function updateHomepageImages(files: FileList | null) {
+    const selectedFiles = Array.from(files ?? []);
+    if (!selectedFiles.length) return;
+
+    if (selectedFiles.some((file) => !file.type.startsWith("image/"))) {
       setSettingsState({ type: "error", message: "Vui lòng chọn file ảnh" });
       return;
     }
 
-    if (file.size > 2_000_000) {
-      setSettingsState({ type: "error", message: "Ảnh trang chủ cần nhỏ hơn 2MB" });
+    if (selectedFiles.some((file) => file.size > 2_000_000)) {
+      setSettingsState({ type: "error", message: "Mỗi ảnh trang chủ cần nhỏ hơn 2MB" });
       return;
     }
 
     setSettingsState({ type: "idle", message: "Đang upload ảnh..." });
-    const formData = new FormData();
-    formData.set("image", file);
-    const response = await fetch("/api/admin/homepage-image", {
-      method: "POST",
-      headers: authHeaders(),
-      body: formData
+    const uploadedImageUrls: string[] = [];
+
+    for (const file of selectedFiles) {
+      const formData = new FormData();
+      formData.set("image", file);
+      const response = await fetch("/api/admin/homepage-image", {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData
+      });
+      const result = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setSettingsState({ type: "error", message: result.error ?? "Không thể upload ảnh" });
+        return;
+      }
+
+      uploadedImageUrls.push(result.imageUrl);
+    }
+
+    const nextImageUrls = [...homepageImageUrls, ...uploadedImageUrls];
+    setHomepageImages(nextImageUrls);
+    await persistHomepageImages(nextImageUrls);
+  }
+
+  async function deleteHomepageImage(imageUrl: string) {
+    const nextImageUrls = homepageImageUrls.filter((currentImageUrl) => currentImageUrl !== imageUrl);
+
+    if (!imageUrl.startsWith("/")) {
+      setSettingsState({ type: "idle", message: "Đang xóa ảnh..." });
+      const response = await fetch("/api/admin/homepage-image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ imageUrl })
+      });
+      const result = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setSettingsState({ type: "error", message: result.error ?? "Không thể xóa ảnh" });
+        return;
+      }
+    }
+
+    setHomepageImages(nextImageUrls);
+    await persistHomepageImages(nextImageUrls);
+  }
+
+  async function persistHomepageImages(imageUrls: string[]) {
+    const nextImageUrls = imageUrls.length ? imageUrls : defaultHomepageContent.heroImageUrls;
+    const nextHomepageContent = {
+      ...homepageContent,
+      heroImageUrl: nextImageUrls[0],
+      heroImageUrls: nextImageUrls
+    };
+
+    const response = await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent: nextHomepageContent, slotCapacity })
     });
     const result = await readJsonResponse(response);
 
     if (!response.ok) {
-      setSettingsState({ type: "error", message: result.error ?? "Không thể upload ảnh" });
+      setSettingsState({ type: "error", message: result.error ?? "Không thể lưu slider ảnh" });
       return;
     }
 
-    updateHomepageContent("heroImageUrl", result.imageUrl);
-    setSettingsState({ type: "success", message: "Đã upload ảnh mới, bấm lưu để áp dụng" });
+    setHomepageContent(result.homepageContent ?? nextHomepageContent);
+    setSettingsState({ type: "success", message: "Đã lưu slider ảnh" });
   }
 
   async function loadUsers(currentToken = token) {
@@ -490,11 +557,28 @@ export default function ManagePage() {
                   <textarea value={homepageContent.description} onChange={(event) => updateHomepageContent("description", event.target.value)} rows={4} required />
                 </label>
                 <label className="wide">
-                  <span>Ảnh trang chủ</span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => updateHomepageImage(event.target.files?.[0] ?? null)} />
+                  <span>Ảnh slider trang chủ</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    onChange={(event) => updateHomepageImages(event.target.files)}
+                  />
                 </label>
-                <div className="heroImagePreview wide">
-                  <div aria-label="Ảnh trang chủ hiện tại" role="img" style={{ backgroundImage: `url("${homepageContent.heroImageUrl}")` }} />
+                <div className="heroImageGallery wide">
+                  {homepageImageUrls.map((imageUrl, index) => (
+                    <article className="heroImageItem" key={`${imageUrl}-${index}`}>
+                      <div
+                        aria-label={`Ảnh slider ${index + 1}`}
+                        role="img"
+                        style={{ backgroundImage: `url("${imageUrl}")` }}
+                      />
+                      <button className="danger" type="button" onClick={() => deleteHomepageImage(imageUrl)}>
+                        <Trash2 aria-hidden="true" />
+                        Xóa ảnh
+                      </button>
+                    </article>
+                  ))}
                 </div>
               </div>
               <FormMessage state={settingsState} />

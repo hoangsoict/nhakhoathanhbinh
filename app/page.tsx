@@ -43,11 +43,16 @@ export default function Home() {
   const [lookupPhone, setLookupPhone] = useState("");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
+  const [activeHeroImageIndex, setActiveHeroImageIndex] = useState(0);
 
   const bookedAppointments = useMemo(
     () => appointments.filter((appointment) => appointment.status === "booked"),
     [appointments]
   );
+  const heroImageUrls = useMemo(() => {
+    if (!homepageContent) return [];
+    return homepageContent.heroImageUrls?.length ? homepageContent.heroImageUrls : [homepageContent.heroImageUrl];
+  }, [homepageContent]);
 
   useEffect(() => {
     async function loadHomepageContent() {
@@ -106,6 +111,21 @@ export default function Home() {
       ignore = true;
     };
   }, [selectedBookingDate]);
+
+  useEffect(() => {
+    if (heroImageUrls.length <= 1) {
+      setActiveHeroImageIndex(0);
+      return;
+    }
+
+    setActiveHeroImageIndex((current) => (current >= heroImageUrls.length ? 0 : current));
+
+    const timer = window.setInterval(() => {
+      setActiveHeroImageIndex((current) => (current + 1) % heroImageUrls.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [heroImageUrls.length]);
 
   async function handleBooking(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -225,12 +245,16 @@ export default function Home() {
 
   return (
     <main>
-      <section
-        className="hero"
-        style={{
-          backgroundImage: `linear-gradient(90deg, rgba(3, 33, 31, 0.82), rgba(3, 33, 31, 0.44), rgba(3, 33, 31, 0.12)), url("${homepageContent.heroImageUrl}")`
-        }}
-      >
+      <section className="hero">
+        <div className="heroSlides" aria-hidden="true">
+          {heroImageUrls.map((imageUrl, index) => (
+            <div
+              className={`heroSlide${index === activeHeroImageIndex ? " active" : ""}`}
+              key={`${imageUrl}-${index}`}
+              style={{ backgroundImage: `url("${imageUrl}")` }}
+            />
+          ))}
+        </div>
         <div className="heroOverlay">
           <nav className="topbar">
             <div className="brand">

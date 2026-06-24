@@ -45,8 +45,9 @@
 - [x] Trang chủ hiển thị thông tin phòng khám/nha khoa Thanh Bình.
 - [x] Nội dung trang chủ lấy từ cấu hình.
 - [x] Trang chủ chờ config admin tải xong rồi mới hiển thị nội dung.
-- [x] Admin upload ảnh trang chủ lên Supabase Storage bucket public `clinic-assets`.
-- [x] Lưu URL ảnh trang chủ vào cấu hình `homepage_content.heroImageUrl`.
+- [x] Admin upload nhiều ảnh slider trang chủ lên Supabase Storage bucket public `clinic-assets`.
+- [x] Lưu URL ảnh slider trang chủ vào cấu hình `homepage_content.heroImageUrls`, giữ `heroImageUrl` là ảnh đầu tiên để tương thích dữ liệu cũ.
+- [x] Trang chủ hiển thị ảnh hero dạng image slide.
 - [x] Form đặt lịch công khai.
 - [x] Ngày khám chỉ chọn hôm nay hoặc ngày mai.
 - [x] Giờ khám là dropdown 30 phút.
@@ -74,6 +75,7 @@
 - [x] Admin đổi trạng thái trực tiếp bằng dropdown trong bảng.
 - [x] Cấu hình ngày nghỉ nội bộ trong tháng hiện tại.
 - [x] Cấu hình nội dung trang chủ.
+- [x] Admin thêm/xóa ảnh slider trang chủ; xóa ảnh sẽ xóa object tương ứng trên Supabase Storage nếu ảnh nằm trong bucket `clinic-assets`.
 - [x] Admin chỉ sửa trực tiếp trạng thái từng lịch trong bảng danh sách.
 - [x] Danh sách Admin giữ dạng bảng, mỗi lịch là một dòng.
 - [x] Danh sách Admin gom các lịch cùng mốc khám vào một cụm.

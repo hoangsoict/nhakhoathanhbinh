@@ -29,6 +29,7 @@ export type HomepageContent = {
   headline: string;
   description: string;
   heroImageUrl: string;
+  heroImageUrls: string[];
 };
 
 export type ClinicSettings = {
@@ -61,7 +62,8 @@ export const defaultHomepageContent: HomepageContent = {
   eyebrow: "Phòng khám đa khoa",
   headline: "Đặt lịch khám bằng số điện thoại",
   description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
-  heroImageUrl: "/clinic-hero.png"
+  heroImageUrl: "/clinic-hero.png",
+  heroImageUrls: ["/clinic-hero.png"]
 };
 
 export function formatDateInVietnam(date: Date) {
@@ -122,6 +124,7 @@ export function validateHomepageContent(value: unknown): HomepageContent {
   }
 
   const raw = value as Record<string, unknown>;
+  const heroImageUrls = validateHeroImageUrls(raw.heroImageUrls, raw.heroImageUrl);
 
   return {
     brandName: requireTextOrDefault(raw.brandName, defaultHomepageContent.brandName).slice(0, 80),
@@ -131,7 +134,8 @@ export function validateHomepageContent(value: unknown): HomepageContent {
     eyebrow: requireTextOrDefault(raw.eyebrow, defaultHomepageContent.eyebrow).slice(0, 80),
     headline: requireTextOrDefault(raw.headline, defaultHomepageContent.headline).slice(0, 120),
     description: requireTextOrDefault(raw.description, defaultHomepageContent.description).slice(0, 220),
-    heroImageUrl: validateHeroImageUrl(raw.heroImageUrl)
+    heroImageUrl: heroImageUrls[0] ?? defaultHomepageContent.heroImageUrl,
+    heroImageUrls
   };
 }
 
@@ -160,6 +164,19 @@ function validateHeroImageUrl(value: unknown) {
   }
 
   return defaultHomepageContent.heroImageUrl;
+}
+
+function validateHeroImageUrls(value: unknown, fallbackValue: unknown) {
+  const values = Array.isArray(value) ? value : [fallbackValue];
+  const validUrls = Array.from(
+    new Set(
+      values
+        .map((url) => validateHeroImageUrl(url))
+        .filter((url) => url !== defaultHomepageContent.heroImageUrl || values.includes(defaultHomepageContent.heroImageUrl))
+    )
+  ).slice(0, 12);
+
+  return validUrls.length ? validUrls : [defaultHomepageContent.heroImageUrl];
 }
 
 export function normalizePhone(value: string) {

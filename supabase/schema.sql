@@ -49,7 +49,8 @@ create table if not exists public.clinic_settings (
     "eyebrow": "Phòng khám đa khoa",
     "headline": "Đặt lịch khám bằng số điện thoại",
     "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
-    "heroImageUrl": "/clinic-hero.png"
+    "heroImageUrl": "/clinic-hero.png",
+    "heroImageUrls": ["/clinic-hero.png"]
   }'::jsonb,
   updated_at timestamptz not null default now()
 );
@@ -66,7 +67,8 @@ alter table public.clinic_settings
     "eyebrow": "Phòng khám đa khoa",
     "headline": "Đặt lịch khám bằng số điện thoại",
     "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
-    "heroImageUrl": "/clinic-hero.png"
+    "heroImageUrl": "/clinic-hero.png",
+    "heroImageUrls": ["/clinic-hero.png"]
   }'::jsonb;
 
 alter table public.clinic_settings
