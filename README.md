@@ -25,14 +25,23 @@ DATABASE_URL=...
 ADMIN_PIN=...
 ```
 
+Nếu Supabase hiển thị bộ key mới, có thể dùng thêm:
+
+```bash
+SUPABASE_URL=...
+SUPABASE_PUBLISHABLE_KEY=...
+SUPABASE_SECRET_KEY=...
+ADMIN_PIN=...
+```
+
 ## Tạo Supabase database
 
 1. Tạo project Supabase.
 2. Mở SQL Editor.
 3. Chạy nội dung trong `supabase/schema.sql`.
-4. Copy Project URL, service role key và database connection string.
+4. Copy Project URL, service role key hoặc secret key, và database connection string.
 
-Ứng dụng chỉ gọi Supabase từ server route bằng service role key. Không đưa service role key vào biến `NEXT_PUBLIC_*`.
+Ứng dụng chỉ gọi Supabase từ server route bằng service role key hoặc secret key. Không đưa service role key/secret key vào biến `NEXT_PUBLIC_*`.
 
 ## Deploy Vercel
 
@@ -46,6 +55,8 @@ gh repo create nhakhoathanhbinh --private --source=. --remote=origin --push
 vercel link
 vercel env add NEXT_PUBLIC_SUPABASE_URL production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
+vercel env add SUPABASE_URL production
+vercel env add SUPABASE_SECRET_KEY production
 vercel env add DATABASE_URL production
 vercel env add ADMIN_PIN production
 vercel deploy --prod
