@@ -5,8 +5,10 @@ import Image from "next/image";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useMemo, useState } from "react";
 import {
+  appointmentPurposeLabels,
   dayLabels,
   createTimeOptions,
+  defaultBookingAdvanceDays,
   defaultHomepageContent,
   defaultSlotCapacity,
   defaultWeeklySchedule,
@@ -50,6 +52,7 @@ export default function ManagePage() {
   const [internalHolidays, setInternalHolidays] = useState<string[]>([]);
   const [homepageContent, setHomepageContent] = useState<HomepageContent>(defaultHomepageContent);
   const [slotCapacity, setSlotCapacity] = useState(defaultSlotCapacity);
+  const [bookingAdvanceDays, setBookingAdvanceDays] = useState(defaultBookingAdvanceDays);
   const [users, setUsers] = useState<MaintainUser[]>([]);
   const [userPasswordDrafts, setUserPasswordDrafts] = useState<Record<string, string>>({});
   const [actionLoadingMessage, setActionLoadingMessage] = useState("");
@@ -179,6 +182,7 @@ export default function ManagePage() {
     setInternalHolidays(result.internalHolidays ?? []);
     setHomepageContent(result.homepageContent ?? defaultHomepageContent);
     setSlotCapacity(result.slotCapacity ?? defaultSlotCapacity);
+    setBookingAdvanceDays(result.bookingAdvanceDays ?? defaultBookingAdvanceDays);
     setSettingsState({ type: "success", message: "Đã tải cấu hình" });
     if (!silent) {
       setActionLoadingMessage("");
@@ -193,7 +197,7 @@ export default function ManagePage() {
     const response = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent, slotCapacity })
+      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent, slotCapacity, bookingAdvanceDays })
     });
     const result = await readJsonResponse(response);
 
@@ -207,12 +211,13 @@ export default function ManagePage() {
     setInternalHolidays(result.internalHolidays ?? []);
     setHomepageContent(result.homepageContent ?? homepageContent);
     setSlotCapacity(result.slotCapacity ?? slotCapacity);
+    setBookingAdvanceDays(result.bookingAdvanceDays ?? bookingAdvanceDays);
     setSettingsState({ type: "success", message: "Đã lưu cấu hình" });
     setActionLoadingMessage("");
     setSuccessPopupMessage("Đã lưu cấu hình");
   }
 
-  function updateWorkingDay(day: string, field: "enabled" | "open" | "close", value: boolean | string) {
+  function updateWorkingDay(day: string, field: "enabled" | "open" | "close" | "breakStart" | "breakEnd", value: boolean | string) {
     setWeeklySchedule((current) => ({
       ...current,
       [day]: { ...current[day], [field]: value }
@@ -381,7 +386,7 @@ export default function ManagePage() {
     const response = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent: nextHomepageContent, slotCapacity })
+      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent: nextHomepageContent, slotCapacity, bookingAdvanceDays })
     });
     const result = await readJsonResponse(response);
 
@@ -616,6 +621,16 @@ export default function ManagePage() {
                 onChange={(value) => setSlotCapacity(Number(value))}
                 required
               />
+              <Field
+                label="Số ngày cho phép đặt lịch"
+                name="bookingAdvanceDays"
+                type="number"
+                min="1"
+                max="60"
+                value={String(bookingAdvanceDays)}
+                onChange={(value) => setBookingAdvanceDays(Number(value))}
+                required
+              />
               <div className="scheduleGrid">
                 {dayLabels.map((label, index) => {
                   const day = String(index);
@@ -642,6 +657,18 @@ export default function ManagePage() {
                         name={`close-${day}`}
                         value={schedule.close}
                         onChange={(value) => updateWorkingDay(day, "close", value)}
+                      />
+                      <TimeSelect24
+                        label="Bắt đầu nghỉ"
+                        name={`break-start-${day}`}
+                        value={schedule.breakStart}
+                        onChange={(value) => updateWorkingDay(day, "breakStart", value)}
+                      />
+                      <TimeSelect24
+                        label="Kết thúc nghỉ"
+                        name={`break-end-${day}`}
+                        value={schedule.breakEnd}
+                        onChange={(value) => updateWorkingDay(day, "breakEnd", value)}
                       />
                     </div>
                   );
@@ -844,19 +871,13 @@ function AppointmentTable({
               <tr key={appointment.id}>
                 <td data-label="Khách hàng">
                   {appointment.full_name}
-                  {appointment.age ? (
-                    <>
-                      <br />
-                      <span className="tableMuted">{appointment.age} tuổi</span>
-                    </>
-                  ) : null}
                 </td>
                 <td data-label="Điện thoại">{appointment.phone}</td>
                 <td data-label="Lịch khám">
                   {appointment.appointment_date} {appointment.appointment_time.slice(0, 5)}
                 </td>
                 <td data-label="Đặt lúc">{formatDateTime(appointment.created_at)}</td>
-                <td data-label="Mục đích">{appointment.purpose || "Không ghi"}</td>
+                <td data-label="Mục đích">{appointmentPurposeLabels[appointment.purpose] ?? "Không ghi"}</td>
                 <td data-label="Trạng thái">
                   <StatusSelect
                     name={`status-${appointment.id}`}

@@ -55,13 +55,14 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 
 - Trang chủ phòng khám/nha khoa Thanh Bình có hero, hotline, địa chỉ, giờ làm việc hiển thị.
 - Admin cấu hình thông tin trang chủ: tên phòng khám, địa chỉ, hotline, giờ hiển thị, nhãn nhỏ, tiêu đề, mô tả.
-- Khách đặt lịch bằng họ tên, số điện thoại, ngày khám, giờ khám; tuổi và mục đích khám không bắt buộc.
+- Khách đặt lịch bằng họ tên, số điện thoại, ngày khám, giờ khám; không có cột/trường tuổi; mục đích khám bắt buộc chọn `Khám và điều trị mới` hoặc `Đang điều trị`.
+- Số điện thoại khách phải là số di động Việt Nam chuẩn 10 chữ số bắt đầu bằng `03`, `05`, `07`, `08` hoặc `09`; không nhận/lưu dạng `+84`, có khoảng trắng hoặc dấu gạch.
 - Khách tra cứu lịch bằng số điện thoại.
 - Khách tra cứu bằng số điện thoại thấy tất cả lịch đã tìm thấy; chỉ lịch `Đã đặt` còn ở tương lai mới hiện thao tác sửa/hủy.
 - Khách sửa lịch bằng số điện thoại.
 - Khách hủy lịch bằng số điện thoại.
 - Khách không cần tài khoản, không đăng nhập, không dùng mã lịch hẹn.
-- Ngày khám hiện chỉ cho chọn hôm nay hoặc ngày mai.
+- Ngày khám cho chọn trong phạm vi `booking_advance_days` do admin cấu hình; ví dụ 3 là hôm nay, ngày mai và ngày kia.
 - Giờ khám chọn bằng dropdown, mỗi slot cách 30 phút.
 - Mỗi số điện thoại chỉ có tối đa một lịch trạng thái `booked` trong cùng ngày khám.
 - Nếu số điện thoại đã có lịch `booked` hoặc `no_show` trong ngày khám thì khách không được đặt lại ngày đó.
@@ -72,6 +73,8 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Role `admin` có `Danh sách đặt lịch`, `Cấu hình lịch làm việc`, `Thông tin trang chủ`, `User maintain`.
 - Admin có thể tạo, disable/enable, đặt lại mật khẩu và xóa user `maintain`.
 - Admin cấu hình số khách tối đa mỗi ca qua `slot_capacity`, mặc định 4.
+- Admin cấu hình số ngày tối đa cho phép khách đặt lịch qua `booking_advance_days`, mặc định 2.
+- Admin cấu hình thời gian nghỉ theo từng ngày làm việc bằng `breakStart`/`breakEnd`; khách không thấy và không đặt được các slot nằm trong khoảng nghỉ, ví dụ 11:30-13:30.
 - Admin xem danh sách lịch theo ngày và trạng thái.
 - Admin xem danh sách lịch dạng bảng như ban đầu; danh sách sắp xếp theo ngày khám, giờ khám, rồi thời điểm đặt lịch tăng dần để ưu tiên khách đặt trước.
 - Admin thấy thời điểm đặt lịch thực tế qua `created_at` hiển thị dạng ngày giờ Việt Nam.
@@ -94,6 +97,11 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - API chặn đặt/sửa vào ngày nghỉ nội bộ.
 - Tab đặt lịch bắt buộc chọn ngày trước rồi mới tải các giờ khám phù hợp với lịch làm việc/ngày nghỉ.
 - Dropdown giờ khám chỉ hiện các slot chưa qua của ngày đã chọn và hiển thị số khách đã đặt dạng `x/4 khách`.
+- Khi khách sửa lịch, phần ngày mới/giờ mới cũng tải slot theo ngày đã chọn giống màn hình đặt lịch.
+- Slot đã đủ khách trong dropdown giờ khám hiển thị mờ và màu đỏ để khách dễ nhận biết.
+- API public đặt/tra cứu/sửa/hủy/availability chuyển lỗi kỹ thuật phổ biến sang thông báo tiếng Việt.
+- Giao diện mobile không để dải thông tin/Facebook chồng lộ dưới ảnh hero; form nằm tách dưới ảnh trên màn hình nhỏ.
+- Dropdown giờ khám không hiển thị các slot nằm trong khoảng thời gian nghỉ đã cấu hình.
 - API public `/api/appointments/availability` trả danh sách slot theo ngày, tổng số khách theo slot, không trả thông tin cá nhân khách hàng.
 - API đặt/sửa lịch chặn slot đã đủ số khách theo cấu hình.
 - Lưu lịch sử tạo/sửa/hủy/cập nhật trạng thái vào `appointment_history`.
@@ -133,13 +141,14 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Không cho khách đăng nhập.
 - Không dùng mã lịch hẹn cho khách.
 - Số điện thoại là khóa thao tác công khai cho đặt/tra cứu/sửa/hủy.
+- Số điện thoại được lưu đúng dạng chuẩn 10 chữ số nội địa, ví dụ `0984009777`.
 - Admin/Lễ tân có quyền tạo/sửa/cập nhật lịch nội bộ không phụ thuộc giới hạn thời gian/ngày áp dụng cho khách.
 - Khách hàng không được xem danh sách lịch của người khác nếu không biết số điện thoại.
 - Service role key chỉ dùng server-side trong Next.js route handlers.
 - Không đưa key nhạy cảm vào `NEXT_PUBLIC_*`.
 - `appointment_history` lưu snapshot để audit.
 - `created_at` của `appointments` là thời điểm đặt lịch thực tế, dùng để ưu tiên thứ tự khách trong cùng giờ khám.
-- `clinic_settings` lưu cấu hình: `weekly_schedule`, `internal_holidays`, `homepage_content`, `slot_capacity`.
+- `clinic_settings` lưu cấu hình: `weekly_schedule`, `internal_holidays`, `homepage_content`, `slot_capacity`, `booking_advance_days`.
 - `staff_users` lưu user `maintain` với password hash PBKDF2, bật/tắt bằng `active`.
 - `homepage_content` có `heroSlides` để lưu ảnh và nội dung từng slide từ Supabase Storage; `heroImageUrls`/`heroImageUrl` vẫn được set để tương thích dữ liệu cũ.
 - `supabase/schema.sql` được viết để có thể chạy lại nhiều lần bằng `if not exists`/`add column if not exists`.

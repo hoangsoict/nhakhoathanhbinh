@@ -3,7 +3,6 @@ create extension if not exists "pgcrypto";
 create table if not exists public.appointments (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
-  age integer check (age > 0 and age < 130),
   phone text not null,
   appointment_date date not null,
   appointment_time time not null,
@@ -14,7 +13,7 @@ create table if not exists public.appointments (
 );
 
 alter table public.appointments
-  alter column age drop not null;
+  drop column if exists age;
 
 create unique index if not exists appointments_one_booked_per_phone_day
   on public.appointments (phone, appointment_date)
@@ -34,16 +33,17 @@ create table if not exists public.appointment_history (
 create table if not exists public.clinic_settings (
   id text primary key default 'default',
   weekly_schedule jsonb not null default '{
-    "0": {"enabled": false, "open": "07:30", "close": "20:00"},
-    "1": {"enabled": true, "open": "07:30", "close": "20:00"},
-    "2": {"enabled": true, "open": "07:30", "close": "20:00"},
-    "3": {"enabled": true, "open": "07:30", "close": "20:00"},
-    "4": {"enabled": true, "open": "07:30", "close": "20:00"},
-    "5": {"enabled": true, "open": "07:30", "close": "20:00"},
-    "6": {"enabled": true, "open": "07:30", "close": "20:00"}
+    "0": {"enabled": false, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "1": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "2": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "3": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "4": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "5": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"}
   }'::jsonb,
   internal_holidays jsonb not null default '[]'::jsonb,
   slot_capacity integer not null default 4 check (slot_capacity > 0 and slot_capacity <= 20),
+  booking_advance_days integer not null default 2 check (booking_advance_days > 0 and booking_advance_days <= 60),
   homepage_content jsonb not null default '{
     "brandName": "Thanh Bình Clinic",
     "logoUrl": "",
@@ -94,6 +94,20 @@ alter table public.clinic_settings
 
 alter table public.clinic_settings
   add column if not exists slot_capacity integer not null default 4;
+
+alter table public.clinic_settings
+  add column if not exists booking_advance_days integer not null default 2;
+
+alter table public.clinic_settings
+  alter column weekly_schedule set default '{
+    "0": {"enabled": false, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "1": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "2": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "3": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "4": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "5": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
+    "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"}
+  }'::jsonb;
 
 create table if not exists public.staff_users (
   id uuid primary key default gen_random_uuid(),

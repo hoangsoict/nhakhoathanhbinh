@@ -5,10 +5,12 @@ import Image from "next/image";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  createTimeOptions,
+  appointmentPurposeLabels,
+  defaultBookingAdvanceDays,
   getAllowedAppointmentDates,
   appointmentStartsAt,
   type Appointment,
+  type AppointmentPurpose,
   type AppointmentStatus,
   type HomepageContent
 } from "@/lib/appointments";
@@ -31,8 +33,6 @@ const statusLabels: Record<AppointmentStatus, string> = {
 
 const allowedDates = getAllowedAppointmentDates();
 const today = allowedDates.today;
-const tomorrow = allowedDates.tomorrow;
-const appointmentTimeOptions = createTimeOptions("07:30", "20:00", 30);
 
 export default function Home() {
   const workspaceRef = useRef<HTMLElement | null>(null);
@@ -46,6 +46,7 @@ export default function Home() {
   const [lookupPhone, setLookupPhone] = useState("");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
+  const [bookingAdvanceDays, setBookingAdvanceDays] = useState(defaultBookingAdvanceDays);
   const [activeHeroImageIndex, setActiveHeroImageIndex] = useState(0);
   const [actionLoadingMessage, setActionLoadingMessage] = useState("");
   const [successPopupMessage, setSuccessPopupMessage] = useState("");
@@ -55,6 +56,7 @@ export default function Home() {
     return homepageContent.heroSlides.length ? homepageContent.heroSlides.map((slide) => slide.imageUrl) : [homepageContent.heroImageUrl];
   }, [homepageContent]);
   const activeHeroSlide = homepageContent?.heroSlides[activeHeroImageIndex];
+  const maxAppointmentDate = useMemo(() => getAllowedAppointmentDates(bookingAdvanceDays).maxDate, [bookingAdvanceDays]);
 
   useEffect(() => {
     async function loadHomepageContent() {
@@ -63,6 +65,7 @@ export default function Home() {
 
       if (response.ok && result.homepageContent) {
         setHomepageContent(result.homepageContent);
+        setBookingAdvanceDays(result.bookingAdvanceDays ?? defaultBookingAdvanceDays);
       }
     }
 
@@ -147,7 +150,6 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: form.get("fullName"),
-          age: form.get("age"),
           phone: form.get("phone"),
           appointmentDate: form.get("appointmentDate"),
           appointmentTime: form.get("appointmentTime"),
@@ -343,16 +345,22 @@ export default function Home() {
         </div>
 
         {tab === "booking" && (
-          <form className="panel formGrid" onSubmit={handleBooking}>
+          <form className="panel formGrid" onSubmit={handleBooking} onInvalid={handleInvalidField} onInput={clearFieldValidation} onChange={clearFieldValidation}>
             <Field label="Họ tên" name="fullName" autoComplete="name" required />
-            <Field label="Tuổi" name="age" type="number" min="1" max="129" />
-            <Field label="Số điện thoại" name="phone" autoComplete="tel" required />
+            <Field
+              label="Số điện thoại"
+              name="phone"
+              autoComplete="tel"
+              inputMode="numeric"
+              pattern="0(3|5|7|8|9)[0-9]{8}"
+              required
+            />
             <Field
               label="Ngày khám"
               name="appointmentDate"
               type="date"
               min={today}
-              max={tomorrow}
+              max={maxAppointmentDate}
               value={selectedBookingDate}
               onChange={setSelectedBookingDate}
               required
@@ -372,10 +380,7 @@ export default function Home() {
               required
             />
             {bookingSlotsState.message && <p className="slotHint">{bookingSlotsState.message}</p>}
-            <label className="wide">
-              <span>Mục đích khám</span>
-              <textarea name="purpose" rows={4} />
-            </label>
+            <PurposeOptions className="wide" />
             <FormMessage state={bookingState} />
             <button className="primaryAction" type="submit" disabled={isBookingSubmitting}>
               <CalendarCheck aria-hidden="true" />
@@ -386,8 +391,16 @@ export default function Home() {
 
         {tab === "lookup" && (
           <div className="panel">
-            <form className="lookupBar" onSubmit={handleLookup}>
-              <Field label="Số điện thoại" name="lookupPhone" value={lookupPhone} onChange={setLookupPhone} required />
+            <form className="lookupBar" onSubmit={handleLookup} onInvalid={handleInvalidField} onInput={clearFieldValidation} onChange={clearFieldValidation}>
+              <Field
+                label="Số điện thoại"
+                name="lookupPhone"
+                value={lookupPhone}
+                onChange={setLookupPhone}
+                inputMode="numeric"
+                pattern="0(3|5|7|8|9)[0-9]{8}"
+                required
+              />
               <button className="primaryAction" type="submit">
                 <Search aria-hidden="true" />
                 Tra cứu
@@ -407,36 +420,15 @@ export default function Home() {
                     <p>
                       {appointment.appointment_date} lúc {appointment.appointment_time.slice(0, 5)}
                     </p>
-                    {appointment.age ? <p>{appointment.age} tuổi</p> : null}
-                    {appointment.purpose ? <p>{appointment.purpose}</p> : null}
+                    <p>{appointmentPurposeLabels[appointment.purpose] ?? appointment.purpose}</p>
                     {canEditAppointment ? (
-                      <form className="editGrid" onSubmit={(event) => updateAppointment(event, appointment.id)}>
-                        <Field
-                          label="Ngày mới"
-                          name="appointmentDate"
-                          type="date"
-                          min={today}
-                          max={tomorrow}
-                          defaultValue={appointment.appointment_date}
-                          required
-                        />
-                        <TimeSelect
-                          label="Giờ mới"
-                          name="appointmentTime"
-                          defaultValue={appointment.appointment_time.slice(0, 5)}
-                          required
-                        />
-                        <label>
-                          <span>Mục đích khám</span>
-                          <textarea name="purpose" rows={3} defaultValue={appointment.purpose} />
-                        </label>
-                        <div className="buttonRow">
-                          <button type="submit">Cập nhật</button>
-                          <button type="button" className="danger" onClick={() => cancelAppointment(appointment.id)}>
-                            Hủy lịch
-                          </button>
-                        </div>
-                      </form>
+                      <EditableAppointmentForm
+                        appointment={appointment}
+                        maxDate={maxAppointmentDate}
+                        minDate={today}
+                        onCancel={() => cancelAppointment(appointment.id)}
+                        onSubmit={(event) => updateAppointment(event, appointment.id)}
+                      />
                     ) : (
                       <p className="slotHint">Lịch này chỉ hiển thị, không còn đủ điều kiện để sửa hoặc hủy.</p>
                     )}
@@ -453,6 +445,116 @@ export default function Home() {
 
 function canCustomerEditAppointment(appointment: Appointment) {
   return appointment.status === "booked" && appointmentStartsAt(appointment.appointment_date, appointment.appointment_time).getTime() > Date.now();
+}
+
+function EditableAppointmentForm({
+  appointment,
+  minDate,
+  maxDate,
+  onSubmit,
+  onCancel
+}: {
+  appointment: Appointment;
+  minDate: string;
+  maxDate: string;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onCancel: () => void;
+}) {
+  const [selectedDate, setSelectedDate] = useState(appointment.appointment_date);
+  const [selectedTime, setSelectedTime] = useState(appointment.appointment_time.slice(0, 5));
+  const [slots, setSlots] = useState<AppointmentSlot[]>([]);
+  const [slotsState, setSlotsState] = useState<ApiState>({ type: "idle", message: "" });
+
+  useEffect(() => {
+    if (!selectedDate) {
+      setSlots([]);
+      setSlotsState({ type: "idle", message: "" });
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadSlots() {
+      setSlots([]);
+      setSlotsState({ type: "idle", message: "Đang tải giờ khám..." });
+
+      try {
+        const params = new URLSearchParams({
+          date: selectedDate,
+          excludeAppointmentId: appointment.id
+        });
+        const response = await fetch(`/api/appointments/availability?${params.toString()}`);
+        const result = await readJsonResponse(response);
+
+        if (ignore) {
+          return;
+        }
+
+        if (!response.ok) {
+          setSlotsState({ type: "error", message: result.error ?? "Không thể tải giờ khám" });
+          return;
+        }
+
+        setSlots(result.slots ?? []);
+        setSlotsState({
+          type: "idle",
+          message: result.reason ?? ((result.slots ?? []).length ? "" : "Không còn giờ khám phù hợp trong ngày này")
+        });
+      } catch {
+        if (!ignore) {
+          setSlotsState({ type: "error", message: "Không thể kết nối để tải giờ khám" });
+        }
+      }
+    }
+
+    loadSlots();
+
+    return () => {
+      ignore = true;
+    };
+  }, [appointment.id, selectedDate]);
+
+  return (
+    <form className="editGrid" onSubmit={onSubmit} onInvalid={handleInvalidField} onInput={clearFieldValidation} onChange={clearFieldValidation}>
+      <Field
+        label="Ngày mới"
+        name="appointmentDate"
+        type="date"
+        min={minDate}
+        max={maxDate}
+        value={selectedDate}
+        onChange={(value) => {
+          setSelectedDate(value);
+          setSelectedTime("");
+        }}
+        required
+      />
+      <TimeSelect
+        label="Giờ mới"
+        name="appointmentTime"
+        value={selectedTime}
+        onChange={setSelectedTime}
+        slots={slots}
+        disabled={!selectedDate || Boolean(slotsState.message)}
+        placeholder={
+          !selectedDate
+            ? "Chọn ngày khám trước"
+            : slotsState.message
+              ? "Chưa có giờ khả dụng"
+              : "Chọn giờ khám"
+        }
+        required
+      />
+      {slotsState.message && <p className="slotHint">{slotsState.message}</p>}
+      <PurposeOptions defaultValue={appointment.purpose} />
+      <div className="buttonRow">
+        <button type="submit">Cập nhật</button>
+        <button type="button" className="danger" onClick={onCancel}>
+          Hủy lịch
+        </button>
+      </div>
+    </form>
+  );
 }
 
 function AddressLink({ content }: { content: HomepageContent }) {
@@ -508,9 +610,8 @@ function TimeSelect({
   name,
   value,
   onChange,
-  defaultValue,
   placeholder = "Chọn giờ khám",
-  slots,
+  slots = [],
   disabled,
   required
 }: {
@@ -518,21 +619,17 @@ function TimeSelect({
   name: string;
   value?: string;
   onChange?: (value: string) => void;
-  defaultValue?: string;
   placeholder?: string;
   slots?: AppointmentSlot[];
   disabled?: boolean;
   required?: boolean;
 }) {
-  const hasDynamicSlots = Array.isArray(slots);
-
   return (
     <label>
       <span>{label}</span>
       <select
         name={name}
         value={value}
-        defaultValue={value === undefined ? (defaultValue ?? "") : undefined}
         onChange={onChange ? (event) => onChange(event.target.value) : undefined}
         disabled={disabled}
         required={required}
@@ -540,19 +637,33 @@ function TimeSelect({
         <option value="" disabled>
           {placeholder}
         </option>
-        {hasDynamicSlots
-          ? slots.map((slot) => (
-              <option value={slot.time} key={slot.time} disabled={!slot.available}>
-                {slot.time} - {slot.bookedCount}/{slot.capacity} khách
-              </option>
-            ))
-          : appointmentTimeOptions.map((time) => (
-              <option value={time} key={time}>
-                {time}
-              </option>
-            ))}
+        {slots.map((slot) => (
+          <option className={!slot.available ? "slotFullOption" : ""} value={slot.time} key={slot.time} disabled={!slot.available}>
+            {slot.time} - {slot.bookedCount}/{slot.capacity} khách
+          </option>
+        ))}
       </select>
     </label>
+  );
+}
+
+function PurposeOptions({
+  defaultValue,
+  className
+}: {
+  defaultValue?: AppointmentPurpose;
+  className?: string;
+}) {
+  return (
+    <fieldset className={className}>
+      <legend>Mục đích khám</legend>
+      {(Object.entries(appointmentPurposeLabels) as [AppointmentPurpose, string][]).map(([value, label]) => (
+        <label className="checkLabel" key={value}>
+          <input name="purpose" type="radio" value={value} defaultChecked={defaultValue === value} required />
+          <span>{label}</span>
+        </label>
+      ))}
+    </fieldset>
   );
 }
 
@@ -582,6 +693,81 @@ function SuccessPopup({ message, onClose }: { message: string; onClose: () => vo
       </div>
     </div>
   );
+}
+
+type ValidatableElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+function isValidatableElement(target: EventTarget | null): target is ValidatableElement {
+  return target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
+}
+
+function clearFieldValidation(event: FormEvent<HTMLFormElement>) {
+  if (isValidatableElement(event.target)) {
+    event.target.setCustomValidity("");
+  }
+}
+
+function handleInvalidField(event: FormEvent<HTMLFormElement>) {
+  if (!isValidatableElement(event.target)) {
+    return;
+  }
+
+  event.target.setCustomValidity(getVietnameseValidationMessage(event.target));
+}
+
+function getVietnameseValidationMessage(control: ValidatableElement) {
+  const label = getFieldLabel(control);
+  const validity = control.validity;
+
+  if (validity.valueMissing) {
+    return control instanceof HTMLInputElement && control.type === "radio"
+      ? `Vui lòng chọn ${label.toLowerCase()}`
+      : `${label} là bắt buộc`;
+  }
+
+  if (validity.patternMismatch) {
+    if (control.name === "phone" || control.name === "lookupPhone") {
+      return "Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09";
+    }
+
+    return `${label} không đúng định dạng`;
+  }
+
+  if (validity.typeMismatch) {
+    return `${label} không đúng định dạng`;
+  }
+
+  if (validity.rangeUnderflow) {
+    return `${label} không được nhỏ hơn giá trị tối thiểu`;
+  }
+
+  if (validity.rangeOverflow) {
+    return `${label} vượt quá giá trị cho phép`;
+  }
+
+  if (validity.tooShort) {
+    return `${label} quá ngắn`;
+  }
+
+  if (validity.tooLong) {
+    return `${label} quá dài`;
+  }
+
+  return `${label} không hợp lệ`;
+}
+
+function getFieldLabel(control: ValidatableElement) {
+  const fieldsetLegend = control.closest("fieldset")?.querySelector("legend")?.textContent?.trim();
+  if (fieldsetLegend) {
+    return fieldsetLegend;
+  }
+
+  const labelText = control.closest("label")?.querySelector("span")?.textContent?.trim();
+  if (labelText) {
+    return labelText;
+  }
+
+  return "Trường này";
 }
 
 async function readJsonResponse(response: Response) {

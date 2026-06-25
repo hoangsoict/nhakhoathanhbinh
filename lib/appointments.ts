@@ -3,11 +3,10 @@ export type AppointmentStatus = "booked" | "cancelled" | "completed" | "no_show"
 export type Appointment = {
   id: string;
   full_name: string;
-  age: number | null;
   phone: string;
   appointment_date: string;
   appointment_time: string;
-  purpose: string;
+  purpose: AppointmentPurpose;
   status: AppointmentStatus;
   created_at: string;
   updated_at: string;
@@ -17,9 +16,12 @@ export type WorkingDay = {
   enabled: boolean;
   open: string;
   close: string;
+  breakStart: string;
+  breakEnd: string;
 };
 
 export type WeeklySchedule = Record<string, WorkingDay>;
+export type AppointmentPurpose = "new_treatment" | "ongoing_treatment";
 export type HomepageSlide = {
   imageUrl: string;
   eyebrow: string;
@@ -48,21 +50,28 @@ export type ClinicSettings = {
   internalHolidays: string[];
   homepageContent: HomepageContent;
   slotCapacity: number;
+  bookingAdvanceDays: number;
 };
 
 export const defaultSlotCapacity = 4;
+export const defaultBookingAdvanceDays = 2;
 export const occupyingAppointmentStatuses: AppointmentStatus[] = ["booked", "completed"];
 export const customerDailyBlockingStatuses: AppointmentStatus[] = ["booked", "no_show"];
 export const dayLabels = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"] as const;
+export const appointmentPurposeLabels: Record<AppointmentPurpose, string> = {
+  new_treatment: "Khám và điều trị mới",
+  ongoing_treatment: "Đang điều trị"
+};
+export const appointmentPurposeValues = Object.keys(appointmentPurposeLabels) as AppointmentPurpose[];
 
 export const defaultWeeklySchedule: WeeklySchedule = {
-  "0": { enabled: false, open: "07:30", close: "20:00" },
-  "1": { enabled: true, open: "07:30", close: "20:00" },
-  "2": { enabled: true, open: "07:30", close: "20:00" },
-  "3": { enabled: true, open: "07:30", close: "20:00" },
-  "4": { enabled: true, open: "07:30", close: "20:00" },
-  "5": { enabled: true, open: "07:30", close: "20:00" },
-  "6": { enabled: true, open: "07:30", close: "20:00" }
+  "0": { enabled: false, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
+  "1": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
+  "2": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
+  "3": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
+  "4": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
+  "5": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
+  "6": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" }
 };
 
 export const defaultHomepageContent: HomepageContent = {
@@ -104,9 +113,15 @@ export function addDaysToDateString(date: string, days: number) {
   return formatDateInVietnam(new Date(new Date(`${date}T00:00:00+07:00`).getTime() + days * 24 * 60 * 60 * 1000));
 }
 
-export function getAllowedAppointmentDates() {
+export function getAllowedAppointmentDates(bookingAdvanceDays = defaultBookingAdvanceDays) {
   const today = formatDateInVietnam(new Date());
-  return { today, tomorrow: addDaysToDateString(today, 1) };
+  const maxDate = addDaysToDateString(today, Math.max(bookingAdvanceDays, 1) - 1);
+  return { today, maxDate };
+}
+
+export function isWithinAllowedAppointmentDates(date: string, bookingAdvanceDays = defaultBookingAdvanceDays) {
+  const { today, maxDate } = getAllowedAppointmentDates(bookingAdvanceDays);
+  return date >= today && date <= maxDate;
 }
 
 export function getCurrentMonthDates() {
@@ -171,6 +186,16 @@ export function validateSlotCapacity(value: unknown) {
 
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
     return defaultSlotCapacity;
+  }
+
+  return parsed;
+}
+
+export function validateBookingAdvanceDays(value: unknown) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 60) {
+    return defaultBookingAdvanceDays;
   }
 
   return parsed;
@@ -258,7 +283,13 @@ function validateHttpUrl(value: unknown) {
 }
 
 export function normalizePhone(value: string) {
-  return value.replace(/[^\d+]/g, "").trim();
+  const phone = value.trim();
+
+  if (!/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
+    throw new Error("Số điện thoại phải là số di động Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09");
+  }
+
+  return phone;
 }
 
 export function appointmentStartsAt(date: string, time: string) {
@@ -293,8 +324,11 @@ export function validateWeeklySchedule(value: unknown): WeeklySchedule {
       const enabled = Boolean(raw.enabled);
       const open = requireText(raw.open, "Giờ mở cửa");
       const close = requireText(raw.close, "Giờ đóng cửa");
+      const defaultDay = defaultWeeklySchedule[day];
+      const breakStart = typeof raw.breakStart === "string" && raw.breakStart ? raw.breakStart : defaultDay.breakStart;
+      const breakEnd = typeof raw.breakEnd === "string" && raw.breakEnd ? raw.breakEnd : defaultDay.breakEnd;
 
-      if (!/^\d{2}:\d{2}$/.test(open) || !/^\d{2}:\d{2}$/.test(close)) {
+      if (![open, close, breakStart, breakEnd].every((time) => /^\d{2}:\d{2}$/.test(time))) {
         throw new Error("Giờ làm việc phải dùng định dạng HH:mm");
       }
 
@@ -302,7 +336,11 @@ export function validateWeeklySchedule(value: unknown): WeeklySchedule {
         throw new Error("Giờ mở cửa phải trước giờ đóng cửa");
       }
 
-      return [day, { enabled, open, close }];
+      if (enabled && breakStart >= breakEnd) {
+        throw new Error("Giờ bắt đầu nghỉ phải trước giờ kết thúc nghỉ");
+      }
+
+      return [day, { enabled, open, close, breakStart, breakEnd }];
     })
   );
 }
@@ -316,7 +354,18 @@ export function isWithinWorkingSchedule(schedule: WeeklySchedule, date: string, 
   const workingDay = getScheduleForDate(schedule, date);
   const appointmentTime = normalizeTime(time);
 
-  return workingDay.enabled && appointmentTime >= workingDay.open && appointmentTime <= workingDay.close;
+  return (
+    workingDay.enabled &&
+    appointmentTime >= workingDay.open &&
+    appointmentTime <= workingDay.close &&
+    !isWithinBreakTime(workingDay, appointmentTime)
+  );
+}
+
+export function isWithinBreakTime(workingDay: WorkingDay, time: string) {
+  const appointmentTime = normalizeTime(time);
+
+  return appointmentTime >= workingDay.breakStart && appointmentTime < workingDay.breakEnd;
 }
 
 export function isThirtyMinuteSlot(time: string) {
@@ -350,8 +399,18 @@ export function getAvailableTimeOptionsForDate(schedule: WeeklySchedule, date: s
   }
 
   return createTimeOptions(workingDay.open, workingDay.close, 30).filter((time) => {
-    return isAppointmentInFuture(date, time);
+    return isAppointmentInFuture(date, time) && !isWithinBreakTime(workingDay, time);
   });
+}
+
+export function requireAppointmentPurpose(value: unknown) {
+  const purpose = typeof value === "string" ? value.trim() : "";
+
+  if (appointmentPurposeValues.includes(purpose as AppointmentPurpose)) {
+    return purpose as AppointmentPurpose;
+  }
+
+  throw new Error("Mục đích khám là bắt buộc");
 }
 
 export function isAppointmentInFuture(date: string, time: string) {
@@ -376,21 +435,4 @@ export function requireTextOrDefault(value: unknown, fallback: string) {
   }
 
   return value.trim();
-}
-
-export function requirePositiveInteger(value: unknown, field: string) {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(`${field} phải là số nguyên dương`);
-  }
-
-  return parsed;
-}
-
-export function optionalPositiveInteger(value: unknown, field: string) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  return requirePositiveInteger(value, field);
 }

@@ -291,7 +291,7 @@ button:disabled {
 h1 {
   margin: 0;
   max-width: 670px;
-  font-size: clamp(2.3rem, 6vw, 5.4rem);
+  font-size: clamp(2.1rem, 5.2vw, 4.8rem);
   line-height: 1.02;
   letter-spacing: 0;
 }
@@ -402,6 +402,22 @@ label span {
   font-weight: 700;
 }
 
+fieldset {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+legend {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 input,
 select,
 textarea {
@@ -412,6 +428,13 @@ textarea {
   padding: 10px 12px;
   color: var(--ink);
   background: #ffffff;
+}
+
+select option:disabled,
+.slotFullOption {
+  color: var(--danger);
+  background: #fff1f0;
+  opacity: 0.58;
 }
 
 textarea {
@@ -605,7 +628,7 @@ textarea {
 
 .scheduleRow {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) 150px 150px;
+  grid-template-columns: minmax(150px, 1fr) repeat(4, minmax(120px, 150px));
   gap: 12px;
   align-items: end;
   padding: 12px;
@@ -803,7 +826,7 @@ tr:last-child td {
 @media (max-width: 820px) {
   .hero,
   .heroOverlay {
-    min-height: 68vh;
+    min-height: 62vh;
   }
 
   .heroOverlay {
@@ -820,12 +843,27 @@ tr:last-child td {
     grid-template-columns: 1fr;
     justify-items: start;
     gap: 10px;
-    padding: 14px;
+    padding: 12px 14px;
   }
 
   .headerMenu {
+    width: 100%;
     justify-content: flex-start;
     order: 3;
+    gap: 10px;
+  }
+
+  .headerMenu button {
+    flex: 1 1 0;
+    min-height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fbff;
+  }
+
+  .headerMenu button.active {
+    border-color: var(--accent-strong);
+    background: #eef4ff;
   }
 
   .headerInfo {
@@ -844,12 +882,12 @@ tr:last-child td {
   }
 
   h1 {
-    font-size: clamp(2rem, 9vw, 3.6rem);
+    font-size: clamp(1.85rem, 8vw, 3.2rem);
   }
 
   .workspace {
     width: calc(100% - 20px);
-    margin: -28px auto 44px;
+    margin: 12px auto 44px;
   }
 
   .managePage {
@@ -910,7 +948,11 @@ tr:last-child td {
 
   .hero,
   .heroOverlay {
-    min-height: 64vh;
+    min-height: 56vh;
+  }
+
+  .heroContent {
+    padding: 30px 0 34px;
   }
 
   .primaryAction,
@@ -925,7 +967,13 @@ tr:last-child td {
   }
 
   .infoStrip {
+    display: grid;
+    gap: 8px;
     padding: 14px;
+  }
+
+  .infoStrip div:not(:first-child) {
+    display: none;
   }
 
   .appointmentCard {
@@ -1031,13 +1079,16 @@ tr:last-child td {
 
   .headerMenu {
     width: 100%;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
+  }
+
+  .siteHeader {
+    padding: 10px;
   }
 
   .workspace,
   .managePage {
-    width: calc(100% - 14px);
+    width: calc(100% - 12px);
   }
 
   .panel {

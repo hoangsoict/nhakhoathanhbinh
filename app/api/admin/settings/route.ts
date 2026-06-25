@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateHomepageContent, validateInternalHolidays, validateSlotCapacity, validateWeeklySchedule } from "@/lib/appointments";
+import {
+  validateBookingAdvanceDays,
+  validateHomepageContent,
+  validateInternalHolidays,
+  validateSlotCapacity,
+  validateWeeklySchedule
+} from "@/lib/appointments";
 import { requireStaff } from "@/lib/admin-auth";
 import { getClinicSettings, saveClinicSettings } from "@/lib/settings";
 
@@ -28,7 +34,10 @@ export async function PATCH(request: NextRequest) {
     const internalHolidays = validateInternalHolidays(body.internalHolidays);
     const homepageContent = validateHomepageContent(body.homepageContent);
     const slotCapacity = validateSlotCapacity(body.slotCapacity);
-    return NextResponse.json(await saveClinicSettings({ weeklySchedule, internalHolidays, homepageContent, slotCapacity }));
+    const bookingAdvanceDays = validateBookingAdvanceDays(body.bookingAdvanceDays);
+    return NextResponse.json(
+      await saveClinicSettings({ weeklySchedule, internalHolidays, homepageContent, slotCapacity, bookingAdvanceDays })
+    );
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return jsonError("Vui lòng đăng nhập bằng tài khoản admin", 401);

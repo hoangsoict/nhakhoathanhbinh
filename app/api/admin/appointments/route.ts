@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   isThirtyMinuteSlot,
   normalizePhone,
-  optionalPositiveInteger,
+  requireAppointmentPurpose,
   requireText,
   type AppointmentStatus
 } from "@/lib/appointments";
@@ -26,10 +26,9 @@ function parseStatus(value: unknown): AppointmentStatus {
 function parseAppointmentPayload(body: Record<string, unknown>) {
   const fullName = requireText(body.fullName, "Họ tên");
   const phone = normalizePhone(requireText(body.phone, "Số điện thoại"));
-  const age = optionalPositiveInteger(body.age, "Tuổi");
   const appointmentDate = requireText(body.appointmentDate, "Ngày khám");
   const appointmentTime = requireText(body.appointmentTime, "Giờ khám");
-  const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "";
+  const purpose = requireAppointmentPurpose(body.purpose);
   const status = body.status ? parseStatus(body.status) : "booked";
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {
@@ -42,7 +41,6 @@ function parseAppointmentPayload(body: Record<string, unknown>) {
 
   return {
     full_name: fullName,
-    age,
     phone,
     appointment_date: appointmentDate,
     appointment_time: appointmentTime,
@@ -139,7 +137,7 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Không tìm thấy lịch hẹn", 404);
     }
 
-    const hasAppointmentFields = ["fullName", "age", "phone", "appointmentDate", "appointmentTime", "purpose"].some(
+    const hasAppointmentFields = ["fullName", "phone", "appointmentDate", "appointmentTime", "purpose"].some(
       (field) => field in body
     );
     if (session.role === "maintain" && hasAppointmentFields) {

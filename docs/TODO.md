@@ -10,6 +10,7 @@
 - [x] Thêm `internal_holidays` vào `clinic_settings`.
 - [x] Thêm `homepage_content` vào `clinic_settings`.
 - [x] Thêm `slot_capacity` vào `clinic_settings`.
+- [x] Thêm `booking_advance_days` vào `clinic_settings`.
 - [x] Thêm bảng `staff_users` cho user `maintain`.
 - [ ] Chạy lại `supabase/schema.sql` trên Supabase production sau các thay đổi schema mới.
 - [ ] Thêm trạng thái `arrived` cho `Đã đến`.
@@ -48,17 +49,23 @@
 - [x] Admin upload nhiều ảnh slider trang chủ lên Supabase Storage bucket public `clinic-assets`.
 - [x] Lưu ảnh và nội dung riêng từng slide vào cấu hình `homepage_content.heroSlides`, giữ `heroImageUrls`/`heroImageUrl` để tương thích dữ liệu cũ.
 - [x] Trang chủ hiển thị ảnh hero dạng image slide, có chấm bấm chuyển ảnh và tự chuyển sau 30 giây.
-- [x] Form đặt lịch công khai, tuổi và mục đích khám không bắt buộc.
-- [x] Ngày khám chỉ chọn hôm nay hoặc ngày mai.
+- [x] Form đặt lịch công khai không còn hỏi tuổi; mục đích khám bắt buộc chọn `Khám và điều trị mới` hoặc `Đang điều trị`.
+- [x] Validate số điện thoại khách theo chuẩn số di động Việt Nam 10 chữ số, không lưu dạng `+84`, có khoảng trắng hoặc dấu gạch.
+- [x] Ngày khám chọn theo phạm vi `booking_advance_days` admin cấu hình.
 - [x] Giờ khám là dropdown 30 phút.
 - [x] Tra cứu lịch bằng số điện thoại.
 - [x] Sửa lịch bằng số điện thoại; chỉ lịch `Đã đặt` còn ở tương lai mới cho sửa/hủy trên UI khách.
+- [x] Khi sửa lịch, ngày mới/giờ mới tải slot khả dụng giống form đặt lịch.
 - [x] Hủy lịch bằng số điện thoại.
 - [x] Tab đặt lịch bắt buộc chọn ngày trước khi chọn giờ.
 - [x] Chỉ hiển thị giờ khám theo lịch làm việc/ngày nghỉ của ngày đã chọn.
+- [x] Không hiển thị giờ khám nằm trong khoảng thời gian nghỉ đã cấu hình.
 - [x] Ẩn các giờ đã qua trong ngày hiện tại.
 - [x] Hiển thị số khách đã đặt theo từng giờ dạng `x/4 khách`.
 - [x] Hiển thị lỗi rõ khi slot đủ khách theo cấu hình.
+- [x] Slot đủ khách hiển thị mờ và màu đỏ trong dropdown giờ khám.
+- [x] Lỗi public API đặt lịch/availability hiển thị tiếng Việt thay vì lỗi kỹ thuật.
+- [x] Tối ưu mobile: form không chồng lên ảnh hero và không lộ link Facebook dưới ảnh.
 - [ ] Cân nhắc OTP/xác minh số điện thoại.
 - [x] Tra cứu hiển thị cả lịch cũ và lịch khác trạng thái `Đã đặt`.
 - [ ] Cải thiện UX khi số điện thoại có nhiều lịch cũ.
@@ -89,6 +96,8 @@
 - [x] Admin đặt lại mật khẩu user maintain.
 - [x] Admin xóa user maintain.
 - [x] Admin cấu hình số khách tối đa mỗi ca.
+- [x] Admin cấu hình số ngày tối đa cho phép khách đặt lịch.
+- [x] Admin cấu hình thời gian nghỉ theo từng ngày làm việc.
 - [ ] UI xem lịch sử tạo/sửa/hủy/cập nhật trạng thái.
 - [ ] Bộ lọc theo số điện thoại, tên khách, khoảng ngày.
 
@@ -98,6 +107,7 @@
 - [x] Khách hàng không cần đăng nhập.
 - [x] Không dùng mã lịch hẹn cho khách hàng.
 - [x] Khách dùng số điện thoại để đặt, tra cứu, sửa, hủy.
+- [x] Số điện thoại lưu dạng nội địa chuẩn, ví dụ `0984009777`.
 - [x] Mỗi số điện thoại tối đa 01 lịch `Đã đặt` trong cùng ngày khám.
 - [x] Khách có lịch `Đã đặt` hoặc `Không đến` trong ngày thì không được đặt lại ngày đó.
 - [x] Mỗi ca khám dài 30 phút.

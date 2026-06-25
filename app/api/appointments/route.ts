@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getAllowedAppointmentDates,
   isAppointmentInFuture,
   isInternalHoliday,
   isThirtyMinuteSlot,
+  isWithinAllowedAppointmentDates,
   isWithinWorkingSchedule,
   customerDailyBlockingStatuses,
   normalizePhone,
-  optionalPositiveInteger,
   occupyingAppointmentStatuses,
+  requireAppointmentPurpose,
   requireText
 } from "@/lib/appointments";
 import { getClinicSettings } from "@/lib/settings";
@@ -16,6 +16,40 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
+}
+
+function publicErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+
+  if (!message) {
+    return "Yêu cầu không hợp lệ";
+  }
+
+  if (message.includes("duplicate key") || message.includes("appointments_one_booked_per_phone_day")) {
+    return "Số điện thoại này đã có lịch đã đặt trong ngày khám";
+  }
+
+  if (message.includes("violates not-null constraint")) {
+    return "Thiếu thông tin bắt buộc, vui lòng kiểm tra lại form đặt lịch";
+  }
+
+  if (message.includes("violates check constraint")) {
+    return "Thông tin đặt lịch không hợp lệ, vui lòng kiểm tra lại";
+  }
+
+  if (message.includes("invalid input syntax")) {
+    return "Dữ liệu gửi lên không đúng định dạng, vui lòng kiểm tra lại";
+  }
+
+  if (message.includes("Missing Supabase environment variables")) {
+    return "Máy chủ chưa được cấu hình kết nối dữ liệu";
+  }
+
+  if (message.includes("Failed to fetch") || message.includes("fetch failed")) {
+    return "Không thể kết nối đến hệ thống dữ liệu, vui lòng thử lại";
+  }
+
+  return message;
 }
 
 async function addHistory(appointmentId: string, action: string, snapshot: Record<string, unknown>) {
@@ -42,7 +76,7 @@ async function countOccupyingAppointments(date: string, time: string, excludeApp
   const { count, error } = await query;
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(publicErrorMessage(error));
   }
 
   return count ?? 0;
@@ -57,32 +91,33 @@ async function hasCustomerDailyBlockingAppointment(phone: string, date: string) 
     .in("status", customerDailyBlockingStatuses);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(publicErrorMessage(error));
   }
 
   return (count ?? 0) > 0;
 }
 
 export async function GET(request: NextRequest) {
-  const phone = normalizePhone(request.nextUrl.searchParams.get("phone") ?? "");
-  if (!phone) {
-    return jsonError("Số điện thoại là bắt buộc");
+  try {
+    const phone = normalizePhone(requireText(request.nextUrl.searchParams.get("phone"), "Số điện thoại"));
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .select("*")
+      .eq("phone", phone)
+      .order("appointment_date", { ascending: false })
+      .order("appointment_time", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      return jsonError(publicErrorMessage(error), 500);
+    }
+
+    return NextResponse.json({ appointments: data });
+  } catch (error) {
+    return jsonError(publicErrorMessage(error));
   }
-
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin
-    .from("appointments")
-    .select("*")
-    .eq("phone", phone)
-    .order("appointment_date", { ascending: false })
-    .order("appointment_time", { ascending: false })
-    .limit(10);
-
-  if (error) {
-    return jsonError(error.message, 500);
-  }
-
-  return NextResponse.json({ appointments: data });
 }
 
 export async function POST(request: NextRequest) {
@@ -90,14 +125,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const fullName = requireText(body.fullName, "Họ tên");
     const phone = normalizePhone(requireText(body.phone, "Số điện thoại"));
-    const age = optionalPositiveInteger(body.age, "Tuổi");
     const appointmentDate = requireText(body.appointmentDate, "Ngày khám");
     const appointmentTime = requireText(body.appointmentTime, "Giờ khám");
-    const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "";
-    const allowedDates = getAllowedAppointmentDates();
+    const purpose = requireAppointmentPurpose(body.purpose);
 
-    if (![allowedDates.today, allowedDates.tomorrow].includes(appointmentDate)) {
-      return jsonError("Chỉ được đặt lịch trong ngày hôm nay hoặc ngày mai", 409);
+    const settings = await getClinicSettings();
+    if (!isWithinAllowedAppointmentDates(appointmentDate, settings.bookingAdvanceDays)) {
+      return jsonError(`Chỉ được đặt lịch trong phạm vi ${settings.bookingAdvanceDays} ngày`, 409);
     }
 
     if (!isThirtyMinuteSlot(appointmentTime)) {
@@ -108,7 +142,6 @@ export async function POST(request: NextRequest) {
       return jsonError("Giờ khám phải là thời điểm trong tương lai", 409);
     }
 
-    const settings = await getClinicSettings();
     if (isInternalHoliday(settings.internalHolidays, appointmentDate)) {
       return jsonError("Ngày khám là ngày nghỉ nội bộ của phòng khám", 409);
     }
@@ -130,7 +163,6 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       full_name: fullName,
-      age,
       phone,
       appointment_date: appointmentDate,
       appointment_time: appointmentTime,
@@ -149,13 +181,13 @@ export async function POST(request: NextRequest) {
         return jsonError("Số điện thoại này đã có lịch đã đặt trong ngày khám", 409);
       }
 
-      return jsonError(error.message, 500);
+      return jsonError(publicErrorMessage(error), 500);
     }
 
     await addHistory(data.id, "created", data);
     return NextResponse.json({ appointment: data }, { status: 201 });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
+    return jsonError(publicErrorMessage(error));
   }
 }
 
@@ -166,8 +198,7 @@ export async function PATCH(request: NextRequest) {
     const appointmentId = requireText(body.appointmentId, "Mã lịch hẹn");
     const appointmentDate = requireText(body.appointmentDate, "Ngày khám");
     const appointmentTime = requireText(body.appointmentTime, "Giờ khám");
-    const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "";
-    const allowedDates = getAllowedAppointmentDates();
+    const purpose = requireAppointmentPurpose(body.purpose);
 
     const supabaseAdmin = getSupabaseAdmin();
     const { data: existing, error: findError } = await supabaseAdmin
@@ -189,8 +220,9 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Lịch đã đến giờ hoặc đã qua, không thể cập nhật", 409);
     }
 
-    if (![allowedDates.today, allowedDates.tomorrow].includes(appointmentDate)) {
-      return jsonError("Chỉ được đặt lịch trong ngày hôm nay hoặc ngày mai", 409);
+    const settings = await getClinicSettings();
+    if (!isWithinAllowedAppointmentDates(appointmentDate, settings.bookingAdvanceDays)) {
+      return jsonError(`Chỉ được đặt lịch trong phạm vi ${settings.bookingAdvanceDays} ngày`, 409);
     }
 
     if (!isThirtyMinuteSlot(appointmentTime)) {
@@ -201,7 +233,6 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Giờ khám mới phải là thời điểm trong tương lai", 409);
     }
 
-    const settings = await getClinicSettings();
     if (isInternalHoliday(settings.internalHolidays, appointmentDate)) {
       return jsonError("Ngày khám là ngày nghỉ nội bộ của phòng khám", 409);
     }
@@ -233,13 +264,13 @@ export async function PATCH(request: NextRequest) {
         return jsonError("Số điện thoại này đã có lịch đã đặt trong ngày khám", 409);
       }
 
-      return jsonError(error.message, 500);
+      return jsonError(publicErrorMessage(error), 500);
     }
 
     await addHistory(data.id, "updated", { before: existing, after: data });
     return NextResponse.json({ appointment: data });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
+    return jsonError(publicErrorMessage(error));
   }
 }
 
@@ -278,12 +309,12 @@ export async function DELETE(request: NextRequest) {
       .single();
 
     if (error) {
-      return jsonError(error.message, 500);
+      return jsonError(publicErrorMessage(error), 500);
     }
 
     await addHistory(data.id, "cancelled", { before: existing, after: data });
     return NextResponse.json({ appointment: data });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
+    return jsonError(publicErrorMessage(error));
   }
 }

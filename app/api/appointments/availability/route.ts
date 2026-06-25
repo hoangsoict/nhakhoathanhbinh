@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createTimeOptions,
-  getAllowedAppointmentDates,
   getScheduleForDate,
   isAppointmentInFuture,
   isInternalHoliday,
+  isWithinAllowedAppointmentDates,
+  isWithinBreakTime,
   occupyingAppointmentStatuses,
   requireText
 } from "@/lib/appointments";
@@ -15,16 +16,38 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+function publicErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+
+  if (!message) {
+    return "Yêu cầu không hợp lệ";
+  }
+
+  if (message.includes("invalid input syntax")) {
+    return "Dữ liệu gửi lên không đúng định dạng, vui lòng kiểm tra lại";
+  }
+
+  if (message.includes("Missing Supabase environment variables")) {
+    return "Máy chủ chưa được cấu hình kết nối dữ liệu";
+  }
+
+  if (message.includes("Failed to fetch") || message.includes("fetch failed")) {
+    return "Không thể kết nối đến hệ thống dữ liệu, vui lòng thử lại";
+  }
+
+  return message;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const date = requireText(request.nextUrl.searchParams.get("date"), "Ngày khám");
-    const allowedDates = getAllowedAppointmentDates();
+    const excludeAppointmentId = request.nextUrl.searchParams.get("excludeAppointmentId") ?? "";
+    const settings = await getClinicSettings();
 
-    if (![allowedDates.today, allowedDates.tomorrow].includes(date)) {
-      return jsonError("Chỉ được chọn ngày hôm nay hoặc ngày mai", 409);
+    if (!isWithinAllowedAppointmentDates(date, settings.bookingAdvanceDays)) {
+      return jsonError(`Chỉ được chọn ngày trong phạm vi ${settings.bookingAdvanceDays} ngày`, 409);
     }
 
-    const settings = await getClinicSettings();
     if (isInternalHoliday(settings.internalHolidays, date)) {
       return NextResponse.json({ slots: [], reason: "Ngày khám là ngày nghỉ nội bộ của phòng khám" });
     }
@@ -36,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     const workingTimeOptions = createTimeOptions(workingDay.open, workingDay.close, 30);
     const timeOptions = workingTimeOptions.filter((time) => {
-      return isAppointmentInFuture(date, time);
+      return isAppointmentInFuture(date, time) && !isWithinBreakTime(workingDay, time);
     });
 
     if (!timeOptions.length) {
@@ -47,14 +70,20 @@ export async function GET(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("appointments")
       .select("appointment_time, status")
       .eq("appointment_date", date)
       .in("status", occupyingAppointmentStatuses);
 
+    if (excludeAppointmentId) {
+      query = query.neq("id", excludeAppointmentId);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
-      return jsonError(error.message, 500);
+      return jsonError(publicErrorMessage(error), 500);
     }
 
     const counts = new Map<string, number>();
@@ -76,6 +105,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ slots });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Yêu cầu không hợp lệ");
+    return jsonError(publicErrorMessage(error));
   }
 }
