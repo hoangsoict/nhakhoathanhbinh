@@ -3,7 +3,7 @@ create extension if not exists "pgcrypto";
 create table if not exists public.appointments (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
-  age integer not null check (age > 0 and age < 130),
+  age integer check (age > 0 and age < 130),
   phone text not null,
   appointment_date date not null,
   appointment_time time not null,
@@ -12,6 +12,9 @@ create table if not exists public.appointments (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.appointments
+  alter column age drop not null;
 
 create unique index if not exists appointments_one_booked_per_phone_day
   on public.appointments (phone, appointment_date)

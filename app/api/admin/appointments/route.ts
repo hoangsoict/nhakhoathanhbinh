@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   isThirtyMinuteSlot,
   normalizePhone,
-  requirePositiveInteger,
+  optionalPositiveInteger,
   requireText,
   type AppointmentStatus
 } from "@/lib/appointments";
@@ -26,10 +26,10 @@ function parseStatus(value: unknown): AppointmentStatus {
 function parseAppointmentPayload(body: Record<string, unknown>) {
   const fullName = requireText(body.fullName, "Họ tên");
   const phone = normalizePhone(requireText(body.phone, "Số điện thoại"));
-  const age = requirePositiveInteger(body.age, "Tuổi");
+  const age = optionalPositiveInteger(body.age, "Tuổi");
   const appointmentDate = requireText(body.appointmentDate, "Ngày khám");
   const appointmentTime = requireText(body.appointmentTime, "Giờ khám");
-  const purpose = requireText(body.purpose, "Mục đích khám");
+  const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "";
   const status = body.status ? parseStatus(body.status) : "booked";
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {

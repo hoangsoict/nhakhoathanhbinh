@@ -48,11 +48,11 @@
 - [x] Admin upload nhiều ảnh slider trang chủ lên Supabase Storage bucket public `clinic-assets`.
 - [x] Lưu ảnh và nội dung riêng từng slide vào cấu hình `homepage_content.heroSlides`, giữ `heroImageUrls`/`heroImageUrl` để tương thích dữ liệu cũ.
 - [x] Trang chủ hiển thị ảnh hero dạng image slide, có chấm bấm chuyển ảnh và tự chuyển sau 30 giây.
-- [x] Form đặt lịch công khai.
+- [x] Form đặt lịch công khai, tuổi và mục đích khám không bắt buộc.
 - [x] Ngày khám chỉ chọn hôm nay hoặc ngày mai.
 - [x] Giờ khám là dropdown 30 phút.
 - [x] Tra cứu lịch bằng số điện thoại.
-- [x] Sửa lịch bằng số điện thoại.
+- [x] Sửa lịch bằng số điện thoại; chỉ lịch `Đã đặt` còn ở tương lai mới cho sửa/hủy trên UI khách.
 - [x] Hủy lịch bằng số điện thoại.
 - [x] Tab đặt lịch bắt buộc chọn ngày trước khi chọn giờ.
 - [x] Chỉ hiển thị giờ khám theo lịch làm việc/ngày nghỉ của ngày đã chọn.
@@ -60,6 +60,7 @@
 - [x] Hiển thị số khách đã đặt theo từng giờ dạng `x/4 khách`.
 - [x] Hiển thị lỗi rõ khi slot đủ khách theo cấu hình.
 - [ ] Cân nhắc OTP/xác minh số điện thoại.
+- [x] Tra cứu hiển thị cả lịch cũ và lịch khác trạng thái `Đã đặt`.
 - [ ] Cải thiện UX khi số điện thoại có nhiều lịch cũ.
 
 ## Giao Diện Nội Bộ `/manage`

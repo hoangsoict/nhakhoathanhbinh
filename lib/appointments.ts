@@ -3,7 +3,7 @@ export type AppointmentStatus = "booked" | "cancelled" | "completed" | "no_show"
 export type Appointment = {
   id: string;
   full_name: string;
-  age: number;
+  age: number | null;
   phone: string;
   appointment_date: string;
   appointment_time: string;
@@ -385,4 +385,12 @@ export function requirePositiveInteger(value: unknown, field: string) {
   }
 
   return parsed;
+}
+
+export function optionalPositiveInteger(value: unknown, field: string) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  return requirePositiveInteger(value, field);
 }

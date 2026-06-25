@@ -55,8 +55,9 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 
 - Trang chủ phòng khám/nha khoa Thanh Bình có hero, hotline, địa chỉ, giờ làm việc hiển thị.
 - Admin cấu hình thông tin trang chủ: tên phòng khám, địa chỉ, hotline, giờ hiển thị, nhãn nhỏ, tiêu đề, mô tả.
-- Khách đặt lịch bằng họ tên, tuổi, số điện thoại, ngày khám, giờ khám và mục đích khám.
+- Khách đặt lịch bằng họ tên, số điện thoại, ngày khám, giờ khám; tuổi và mục đích khám không bắt buộc.
 - Khách tra cứu lịch bằng số điện thoại.
+- Khách tra cứu bằng số điện thoại thấy tất cả lịch đã tìm thấy; chỉ lịch `Đã đặt` còn ở tương lai mới hiện thao tác sửa/hủy.
 - Khách sửa lịch bằng số điện thoại.
 - Khách hủy lịch bằng số điện thoại.
 - Khách không cần tài khoản, không đăng nhập, không dùng mã lịch hẹn.

@@ -7,8 +7,8 @@ import {
   isWithinWorkingSchedule,
   customerDailyBlockingStatuses,
   normalizePhone,
+  optionalPositiveInteger,
   occupyingAppointmentStatuses,
-  requirePositiveInteger,
   requireText
 } from "@/lib/appointments";
 import { getClinicSettings } from "@/lib/settings";
@@ -90,10 +90,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const fullName = requireText(body.fullName, "Họ tên");
     const phone = normalizePhone(requireText(body.phone, "Số điện thoại"));
-    const age = requirePositiveInteger(body.age, "Tuổi");
+    const age = optionalPositiveInteger(body.age, "Tuổi");
     const appointmentDate = requireText(body.appointmentDate, "Ngày khám");
     const appointmentTime = requireText(body.appointmentTime, "Giờ khám");
-    const purpose = requireText(body.purpose, "Mục đích khám");
+    const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "";
     const allowedDates = getAllowedAppointmentDates();
 
     if (![allowedDates.today, allowedDates.tomorrow].includes(appointmentDate)) {
@@ -166,7 +166,7 @@ export async function PATCH(request: NextRequest) {
     const appointmentId = requireText(body.appointmentId, "Mã lịch hẹn");
     const appointmentDate = requireText(body.appointmentDate, "Ngày khám");
     const appointmentTime = requireText(body.appointmentTime, "Giờ khám");
-    const purpose = requireText(body.purpose, "Mục đích khám");
+    const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "";
     const allowedDates = getAllowedAppointmentDates();
 
     const supabaseAdmin = getSupabaseAdmin();

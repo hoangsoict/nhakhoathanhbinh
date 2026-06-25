@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createTimeOptions,
   getAllowedAppointmentDates,
+  appointmentStartsAt,
   type Appointment,
   type AppointmentStatus,
   type HomepageContent
@@ -49,10 +50,6 @@ export default function Home() {
   const [actionLoadingMessage, setActionLoadingMessage] = useState("");
   const [successPopupMessage, setSuccessPopupMessage] = useState("");
 
-  const bookedAppointments = useMemo(
-    () => appointments.filter((appointment) => appointment.status === "booked"),
-    [appointments]
-  );
   const heroImageUrls = useMemo(() => {
     if (!homepageContent) return [];
     return homepageContent.heroSlides.length ? homepageContent.heroSlides.map((slide) => slide.imageUrl) : [homepageContent.heroImageUrl];
@@ -348,7 +345,7 @@ export default function Home() {
         {tab === "booking" && (
           <form className="panel formGrid" onSubmit={handleBooking}>
             <Field label="Họ tên" name="fullName" autoComplete="name" required />
-            <Field label="Tuổi" name="age" type="number" min="1" max="129" required />
+            <Field label="Tuổi" name="age" type="number" min="1" max="129" />
             <Field label="Số điện thoại" name="phone" autoComplete="tel" required />
             <Field
               label="Ngày khám"
@@ -377,7 +374,7 @@ export default function Home() {
             {bookingSlotsState.message && <p className="slotHint">{bookingSlotsState.message}</p>}
             <label className="wide">
               <span>Mục đích khám</span>
-              <textarea name="purpose" rows={4} required />
+              <textarea name="purpose" rows={4} />
             </label>
             <FormMessage state={bookingState} />
             <button className="primaryAction" type="submit" disabled={isBookingSubmitting}>
@@ -398,50 +395,64 @@ export default function Home() {
             </form>
             <FormMessage state={lookupState} />
             <div className="appointmentList">
-              {bookedAppointments.map((appointment) => (
-                <article className="appointmentCard" key={appointment.id}>
-                  <header>
-                    <strong>{appointment.full_name}</strong>
-                    <span>{statusLabels[appointment.status]}</span>
-                  </header>
-                  <p>
-                    {appointment.appointment_date} lúc {appointment.appointment_time.slice(0, 5)}
-                  </p>
-                  <form className="editGrid" onSubmit={(event) => updateAppointment(event, appointment.id)}>
-                    <Field
-                      label="Ngày mới"
-                      name="appointmentDate"
-                      type="date"
-                      min={today}
-                      max={tomorrow}
-                      defaultValue={appointment.appointment_date}
-                      required
-                    />
-                    <TimeSelect
-                      label="Giờ mới"
-                      name="appointmentTime"
-                      defaultValue={appointment.appointment_time.slice(0, 5)}
-                      required
-                    />
-                    <label>
-                      <span>Mục đích khám</span>
-                      <textarea name="purpose" rows={3} defaultValue={appointment.purpose} required />
-                    </label>
-                    <div className="buttonRow">
-                      <button type="submit">Cập nhật</button>
-                      <button type="button" className="danger" onClick={() => cancelAppointment(appointment.id)}>
-                        Hủy lịch
-                      </button>
-                    </div>
-                  </form>
-                </article>
-              ))}
+              {appointments.map((appointment) => {
+                const canEditAppointment = canCustomerEditAppointment(appointment);
+
+                return (
+                  <article className="appointmentCard" key={appointment.id}>
+                    <header>
+                      <strong>{appointment.full_name}</strong>
+                      <span>{statusLabels[appointment.status]}</span>
+                    </header>
+                    <p>
+                      {appointment.appointment_date} lúc {appointment.appointment_time.slice(0, 5)}
+                    </p>
+                    {appointment.age ? <p>{appointment.age} tuổi</p> : null}
+                    {appointment.purpose ? <p>{appointment.purpose}</p> : null}
+                    {canEditAppointment ? (
+                      <form className="editGrid" onSubmit={(event) => updateAppointment(event, appointment.id)}>
+                        <Field
+                          label="Ngày mới"
+                          name="appointmentDate"
+                          type="date"
+                          min={today}
+                          max={tomorrow}
+                          defaultValue={appointment.appointment_date}
+                          required
+                        />
+                        <TimeSelect
+                          label="Giờ mới"
+                          name="appointmentTime"
+                          defaultValue={appointment.appointment_time.slice(0, 5)}
+                          required
+                        />
+                        <label>
+                          <span>Mục đích khám</span>
+                          <textarea name="purpose" rows={3} defaultValue={appointment.purpose} />
+                        </label>
+                        <div className="buttonRow">
+                          <button type="submit">Cập nhật</button>
+                          <button type="button" className="danger" onClick={() => cancelAppointment(appointment.id)}>
+                            Hủy lịch
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <p className="slotHint">Lịch này chỉ hiển thị, không còn đủ điều kiện để sửa hoặc hủy.</p>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           </div>
         )}
       </section>
     </main>
   );
+}
+
+function canCustomerEditAppointment(appointment: Appointment) {
+  return appointment.status === "booked" && appointmentStartsAt(appointment.appointment_date, appointment.appointment_time).getTime() > Date.now();
 }
 
 function AddressLink({ content }: { content: HomepageContent }) {

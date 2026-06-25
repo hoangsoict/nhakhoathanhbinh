@@ -844,15 +844,19 @@ function AppointmentTable({
               <tr key={appointment.id}>
                 <td data-label="Khách hàng">
                   {appointment.full_name}
-                  <br />
-                  <span className="tableMuted">{appointment.age} tuổi</span>
+                  {appointment.age ? (
+                    <>
+                      <br />
+                      <span className="tableMuted">{appointment.age} tuổi</span>
+                    </>
+                  ) : null}
                 </td>
                 <td data-label="Điện thoại">{appointment.phone}</td>
                 <td data-label="Lịch khám">
                   {appointment.appointment_date} {appointment.appointment_time.slice(0, 5)}
                 </td>
                 <td data-label="Đặt lúc">{formatDateTime(appointment.created_at)}</td>
-                <td data-label="Mục đích">{appointment.purpose}</td>
+                <td data-label="Mục đích">{appointment.purpose || "Không ghi"}</td>
                 <td data-label="Trạng thái">
                   <StatusSelect
                     name={`status-${appointment.id}`}
