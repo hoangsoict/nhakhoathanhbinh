@@ -120,6 +120,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - `next lint` deprecated và hỏi tương tác: chuyển sang `eslint .` với `eslint.config.mjs`.
 - `event.currentTarget` bị `null` sau `await fetch` khi đặt lịch: lưu `formElement` trước khi `await`.
 - Chạy `next build` khi `next dev` đang mở có thể làm `.next` lỗi module/devtools: dừng dev server, xóa `.next`, chạy lại dev server.
+- Vercel chạy timezone UTC nên không dùng `Date#getDay()` trên mốc `YYYY-MM-DDT00:00:00+07:00` để xác định thứ trong tuần; mốc 00:00 Việt Nam bị lùi về ngày hôm trước theo UTC. `getScheduleForDate()` hiện tính thứ trực tiếp từ chuỗi `YYYY-MM-DD` bằng `Date.UTC(...).getUTCDay()`.
 - Supabase thiếu bảng `appointments`: chạy `supabase/schema.sql`.
 - Supabase thiếu `clinic_settings` hoặc cột mới: chạy lại `supabase/schema.sql`; code có fallback đọc config mặc định khi thiếu cột.
 - Lỗi "Không có quyền truy cập" gây nhầm khi gọi API admin cũ; hiện API nội bộ dùng user/pass và token role.

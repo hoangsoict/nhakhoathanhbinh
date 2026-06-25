@@ -266,6 +266,11 @@ export function appointmentStartsAt(date: string, time: string) {
   return new Date(`${date}T${normalizedTime}+07:00`);
 }
 
+function getDayIndexFromDateString(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
 export function normalizeTime(value: string) {
   return value.length === 5 ? value : value.slice(0, 5);
 }
@@ -303,7 +308,7 @@ export function validateWeeklySchedule(value: unknown): WeeklySchedule {
 }
 
 export function getScheduleForDate(schedule: WeeklySchedule, date: string) {
-  const day = appointmentStartsAt(date, "00:00").getDay();
+  const day = getDayIndexFromDateString(date);
   return schedule[String(day)] ?? defaultWeeklySchedule[String(day)];
 }
 
