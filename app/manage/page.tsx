@@ -420,9 +420,10 @@ export default function ManagePage() {
 
   async function createMaintainUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setUserState({ type: "idle", message: "" });
     setActionLoadingMessage("Đang tạo user maintain...");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const response = await fetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -436,7 +437,7 @@ export default function ManagePage() {
       return;
     }
 
-    event.currentTarget.reset();
+    formElement.reset();
     setUserState({ type: "success", message: "Đã tạo user maintain" });
     await loadUsers(token, true);
     setActionLoadingMessage("");
