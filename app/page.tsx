@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, ExternalLink, MapPin, Phone, Search, Stethoscope } from "lucide-react";
+import { CalendarCheck, ExternalLink, MapPin, Search, Stethoscope } from "lucide-react";
 import Image from "next/image";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -336,14 +336,6 @@ export default function Home() {
       </section>
 
       <section className="workspace" ref={workspaceRef}>
-        <div className="infoStrip">
-          <div>
-            <Phone aria-hidden="true" />
-            <span>Hotline: {homepageContent.hotline}</span>
-          </div>
-          {homepageContent.facebookUrl && <FacebookLink content={homepageContent} />}
-        </div>
-
         {tab === "booking" && (
           <form className="panel formGrid" onSubmit={handleBooking} onInvalid={handleInvalidField} onInput={clearFieldValidation} onChange={clearFieldValidation}>
             <Field label="Họ tên" name="fullName" autoComplete="name" required />
