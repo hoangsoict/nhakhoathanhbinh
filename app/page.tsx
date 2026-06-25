@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarCheck, ClipboardList, MapPin, Phone, Search, Stethoscope } from "lucide-react";
+import { CalendarCheck, ExternalLink, MapPin, Phone, Search, Stethoscope } from "lucide-react";
+import Image from "next/image";
 import type { FormEvent, InputHTMLAttributes } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createTimeOptions,
   getAllowedAppointmentDates,
@@ -33,6 +34,7 @@ const tomorrow = allowedDates.tomorrow;
 const appointmentTimeOptions = createTimeOptions("07:30", "20:00", 30);
 
 export default function Home() {
+  const workspaceRef = useRef<HTMLElement | null>(null);
   const [tab, setTab] = useState<Tab>("booking");
   const [bookingState, setBookingState] = useState<ApiState>({ type: "idle", message: "" });
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
@@ -44,6 +46,8 @@ export default function Home() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
   const [activeHeroImageIndex, setActiveHeroImageIndex] = useState(0);
+  const [actionLoadingMessage, setActionLoadingMessage] = useState("");
+  const [successPopupMessage, setSuccessPopupMessage] = useState("");
 
   const bookedAppointments = useMemo(
     () => appointments.filter((appointment) => appointment.status === "booked"),
@@ -51,8 +55,9 @@ export default function Home() {
   );
   const heroImageUrls = useMemo(() => {
     if (!homepageContent) return [];
-    return homepageContent.heroImageUrls?.length ? homepageContent.heroImageUrls : [homepageContent.heroImageUrl];
+    return homepageContent.heroSlides.length ? homepageContent.heroSlides.map((slide) => slide.imageUrl) : [homepageContent.heroImageUrl];
   }, [homepageContent]);
+  const activeHeroSlide = homepageContent?.heroSlides[activeHeroImageIndex];
 
   useEffect(() => {
     async function loadHomepageContent() {
@@ -122,7 +127,7 @@ export default function Home() {
 
     const timer = window.setInterval(() => {
       setActiveHeroImageIndex((current) => (current + 1) % heroImageUrls.length);
-    }, 5000);
+    }, 30000);
 
     return () => window.clearInterval(timer);
   }, [heroImageUrls.length]);
@@ -136,6 +141,7 @@ export default function Home() {
     const formElement = event.currentTarget;
     setBookingState({ type: "idle", message: "" });
     setIsBookingSubmitting(true);
+    setActionLoadingMessage("Đang đặt lịch...");
     const form = new FormData(formElement);
 
     try {
@@ -156,11 +162,13 @@ export default function Home() {
       if (!response.ok) {
         setBookingState({ type: "error", message: result.error ?? "Không thể đặt lịch" });
         setIsBookingSubmitting(false);
+        setActionLoadingMessage("");
         return;
       }
     } catch {
       setBookingState({ type: "error", message: "Không thể kết nối để đặt lịch. Vui lòng thử lại." });
       setIsBookingSubmitting(false);
+      setActionLoadingMessage("");
       return;
     }
 
@@ -168,24 +176,28 @@ export default function Home() {
     setSelectedBookingDate("");
     setBookingSlots([]);
     setIsBookingSubmitting(false);
+    setActionLoadingMessage("");
     setBookingState({ type: "success", message: "Lịch khám đã được ghi nhận" });
+    setSuccessPopupMessage("Lịch khám đã được ghi nhận");
   }
 
   async function lookup(phone = lookupPhone) {
     setLookupState({ type: "idle", message: "" });
+    setActionLoadingMessage("Đang tra cứu lịch hẹn...");
     const response = await fetch(`/api/appointments?phone=${encodeURIComponent(phone)}`);
     const result = await readJsonResponse(response);
 
     if (!response.ok) {
       setLookupState({ type: "error", message: result.error ?? "Không tìm thấy lịch hẹn" });
+      setActionLoadingMessage("");
       return;
     }
 
     setAppointments(result.appointments);
-    setLookupState({
-      type: "success",
-      message: result.appointments.length ? "Đã tìm thấy lịch hẹn" : "Chưa có lịch hẹn cho số điện thoại này"
-    });
+    const message = result.appointments.length ? "Đã tìm thấy lịch hẹn" : "Chưa có lịch hẹn cho số điện thoại này";
+    setLookupState({ type: "success", message });
+    setActionLoadingMessage("");
+    setSuccessPopupMessage(message);
   }
 
   async function handleLookup(event: FormEvent<HTMLFormElement>) {
@@ -195,6 +207,7 @@ export default function Home() {
 
   async function updateAppointment(event: FormEvent<HTMLFormElement>, appointmentId: string) {
     event.preventDefault();
+    setActionLoadingMessage("Đang cập nhật lịch hẹn...");
     const form = new FormData(event.currentTarget);
     const response = await fetch("/api/appointments", {
       method: "PATCH",
@@ -211,14 +224,18 @@ export default function Home() {
 
     if (!response.ok) {
       setLookupState({ type: "error", message: result.error ?? "Không thể sửa lịch" });
+      setActionLoadingMessage("");
       return;
     }
 
     setLookupState({ type: "success", message: "Lịch hẹn đã được cập nhật" });
     await lookup();
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Lịch hẹn đã được cập nhật");
   }
 
   async function cancelAppointment(appointmentId: string) {
+    setActionLoadingMessage("Đang hủy lịch hẹn...");
     const response = await fetch("/api/appointments", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -228,11 +245,21 @@ export default function Home() {
 
     if (!response.ok) {
       setLookupState({ type: "error", message: result.error ?? "Không thể hủy lịch" });
+      setActionLoadingMessage("");
       return;
     }
 
     setLookupState({ type: "success", message: "Lịch hẹn đã được hủy" });
     await lookup();
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Lịch hẹn đã được hủy");
+  }
+
+  function switchTab(targetTab: Tab) {
+    setTab(targetTab);
+    window.setTimeout(() => {
+      workspaceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   }
 
   if (!homepageContent) {
@@ -245,6 +272,37 @@ export default function Home() {
 
   return (
     <main>
+      {actionLoadingMessage && <BlockingOverlay message={actionLoadingMessage} />}
+      {successPopupMessage && <SuccessPopup message={successPopupMessage} onClose={() => setSuccessPopupMessage("")} />}
+      <nav className="siteHeader">
+        <div className="brand">
+          {homepageContent.logoUrl ? (
+            <Image alt="" className="brandLogo" height={42} src={homepageContent.logoUrl} unoptimized width={42} />
+          ) : (
+            <Stethoscope aria-hidden="true" />
+          )}
+          <span className="brandText">
+            <span>{homepageContent.brandName}</span>
+            <span className="brandHotline">{homepageContent.hotline}</span>
+          </span>
+        </div>
+        <div className="headerMenu" role="tablist" aria-label="Chức năng">
+          <button className={tab === "booking" ? "active" : ""} onClick={() => switchTab("booking")}>
+            Đặt lịch
+          </button>
+          <button className={tab === "lookup" ? "active" : ""} onClick={() => switchTab("lookup")}>
+            Tra cứu
+          </button>
+        </div>
+        <div className="headerInfo">
+          <div>
+            <MapPin aria-hidden="true" />
+            <AddressLink content={homepageContent} />
+          </div>
+          {homepageContent.facebookUrl && <FacebookLink content={homepageContent} />}
+        </div>
+      </nav>
+
       <section className="hero">
         <div className="heroSlides" aria-hidden="true">
           {heroImageUrls.map((imageUrl, index) => (
@@ -256,45 +314,35 @@ export default function Home() {
           ))}
         </div>
         <div className="heroOverlay">
-          <nav className="topbar">
-            <div className="brand">
-              <Stethoscope aria-hidden="true" />
-              <span>{homepageContent.brandName}</span>
-            </div>
-            <div className="contactLine">
-              <MapPin aria-hidden="true" />
-              <span>{homepageContent.address}</span>
-            </div>
-          </nav>
-
           <div className="heroContent">
-            <p className="eyebrow">{homepageContent.eyebrow}</p>
-            <h1>{homepageContent.headline}</h1>
-            <p className="heroCopy">{homepageContent.description}</p>
-            <div className="heroActions" role="tablist" aria-label="Chức năng">
-              <button className={tab === "booking" ? "active" : ""} onClick={() => setTab("booking")}>
-                <CalendarCheck aria-hidden="true" />
-                Đặt lịch
-              </button>
-              <button className={tab === "lookup" ? "active" : ""} onClick={() => setTab("lookup")}>
-                <Search aria-hidden="true" />
-                Tra cứu
-              </button>
-            </div>
+            {activeHeroSlide?.eyebrow && <p className="eyebrow">{activeHeroSlide.eyebrow}</p>}
+            {activeHeroSlide?.headline && <h1>{activeHeroSlide.headline}</h1>}
+            {activeHeroSlide?.description && <p className="heroCopy">{activeHeroSlide.description}</p>}
           </div>
+          {heroImageUrls.length > 1 && (
+            <div className="heroDots" aria-label="Chọn ảnh giới thiệu">
+              {heroImageUrls.map((_, index) => (
+                <button
+                  aria-label={`Chuyển đến ảnh ${index + 1}`}
+                  aria-pressed={index === activeHeroImageIndex}
+                  className={index === activeHeroImageIndex ? "active" : ""}
+                  key={index}
+                  onClick={() => setActiveHeroImageIndex(index)}
+                  type="button"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="workspace">
+      <section className="workspace" ref={workspaceRef}>
         <div className="infoStrip">
           <div>
             <Phone aria-hidden="true" />
             <span>Hotline: {homepageContent.hotline}</span>
           </div>
-          <div>
-            <ClipboardList aria-hidden="true" />
-            <span>{homepageContent.hoursText}</span>
-          </div>
+          {homepageContent.facebookUrl && <FacebookLink content={homepageContent} />}
         </div>
 
         {tab === "booking" && (
@@ -396,6 +444,29 @@ export default function Home() {
   );
 }
 
+function AddressLink({ content }: { content: HomepageContent }) {
+  if (!content.addressMapUrl) {
+    return <span>{content.address}</span>;
+  }
+
+  return (
+    <a href={content.addressMapUrl} target="_blank" rel="noopener noreferrer">
+      {content.address}
+    </a>
+  );
+}
+
+function FacebookLink({ content }: { content: HomepageContent }) {
+  return (
+    <div>
+      <ExternalLink aria-hidden="true" />
+      <a href={content.facebookUrl} target="_blank" rel="noopener noreferrer">
+        Facebook
+      </a>
+    </div>
+  );
+}
+
 function Field({
   label,
   name,
@@ -477,6 +548,29 @@ function TimeSelect({
 function FormMessage({ state }: { state: ApiState }) {
   if (state.type === "idle" || !state.message) return null;
   return <p className={`formMessage ${state.type}`}>{state.message}</p>;
+}
+
+function BlockingOverlay({ message }: { message: string }) {
+  return (
+    <div className="blockingOverlay" role="alert" aria-live="assertive">
+      <div className="loadingCard">
+        <span className="loadingSpinner" aria-hidden="true" />
+        <strong>{message}</strong>
+        <span>Vui lòng chờ trong giây lát</span>
+      </div>
+    </div>
+  );
+}
+
+function SuccessPopup({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div className="successDialog" role="dialog" aria-modal="true" aria-label="Thông báo thành công" onClick={onClose}>
+      <div className="successCard" onClick={(event) => event.stopPropagation()}>
+        <strong>Thành công</strong>
+        <p>{message}</p>
+      </div>
+    </div>
+  );
 }
 
 async function readJsonResponse(response: Response) {

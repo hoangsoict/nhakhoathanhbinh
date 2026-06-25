@@ -43,14 +43,23 @@ create table if not exists public.clinic_settings (
   slot_capacity integer not null default 4 check (slot_capacity > 0 and slot_capacity <= 20),
   homepage_content jsonb not null default '{
     "brandName": "Thanh Bình Clinic",
+    "logoUrl": "",
     "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "addressMapUrl": "",
     "hotline": "028 1234 5678",
+    "facebookUrl": "",
     "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
     "eyebrow": "Phòng khám đa khoa",
     "headline": "Đặt lịch khám bằng số điện thoại",
     "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
     "heroImageUrl": "/clinic-hero.png",
-    "heroImageUrls": ["/clinic-hero.png"]
+    "heroImageUrls": ["/clinic-hero.png"],
+    "heroSlides": [{
+      "imageUrl": "/clinic-hero.png",
+      "eyebrow": "Phòng khám đa khoa",
+      "headline": "Đặt lịch khám bằng số điện thoại",
+      "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+    }]
   }'::jsonb,
   updated_at timestamptz not null default now()
 );
@@ -61,14 +70,23 @@ alter table public.clinic_settings
 alter table public.clinic_settings
   add column if not exists homepage_content jsonb not null default '{
     "brandName": "Thanh Bình Clinic",
+    "logoUrl": "",
     "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "addressMapUrl": "",
     "hotline": "028 1234 5678",
+    "facebookUrl": "",
     "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
     "eyebrow": "Phòng khám đa khoa",
     "headline": "Đặt lịch khám bằng số điện thoại",
     "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
     "heroImageUrl": "/clinic-hero.png",
-    "heroImageUrls": ["/clinic-hero.png"]
+    "heroImageUrls": ["/clinic-hero.png"],
+    "heroSlides": [{
+      "imageUrl": "/clinic-hero.png",
+      "eyebrow": "Phòng khám đa khoa",
+      "headline": "Đặt lịch khám bằng số điện thoại",
+      "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+    }]
   }'::jsonb;
 
 alter table public.clinic_settings

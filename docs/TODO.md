@@ -46,8 +46,8 @@
 - [x] Nội dung trang chủ lấy từ cấu hình.
 - [x] Trang chủ chờ config admin tải xong rồi mới hiển thị nội dung.
 - [x] Admin upload nhiều ảnh slider trang chủ lên Supabase Storage bucket public `clinic-assets`.
-- [x] Lưu URL ảnh slider trang chủ vào cấu hình `homepage_content.heroImageUrls`, giữ `heroImageUrl` là ảnh đầu tiên để tương thích dữ liệu cũ.
-- [x] Trang chủ hiển thị ảnh hero dạng image slide.
+- [x] Lưu ảnh và nội dung riêng từng slide vào cấu hình `homepage_content.heroSlides`, giữ `heroImageUrls`/`heroImageUrl` để tương thích dữ liệu cũ.
+- [x] Trang chủ hiển thị ảnh hero dạng image slide, có chấm bấm chuyển ảnh và tự chuyển sau 30 giây.
 - [x] Form đặt lịch công khai.
 - [x] Ngày khám chỉ chọn hôm nay hoặc ngày mai.
 - [x] Giờ khám là dropdown 30 phút.
@@ -75,6 +75,9 @@
 - [x] Admin đổi trạng thái trực tiếp bằng dropdown trong bảng.
 - [x] Cấu hình ngày nghỉ nội bộ trong tháng hiện tại.
 - [x] Cấu hình nội dung trang chủ.
+- [x] Admin cấu hình tên phòng khám, logo, địa chỉ, link Google Maps, hotline, link Facebook là thông tin chung; nhãn nhỏ, tiêu đề chính, mô tả là nội dung riêng từng ảnh và được phép bỏ trống.
+- [x] Địa chỉ trang chủ bấm mở Google Maps khi có `homepage_content.addressMapUrl`.
+- [x] Trang chủ hiển thị logo và link Facebook từ config admin thay cho phần giờ làm việc.
 - [x] Admin thêm/xóa ảnh slider trang chủ; xóa ảnh sẽ xóa object tương ứng trên Supabase Storage nếu ảnh nằm trong bucket `clinic-assets`.
 - [x] Admin chỉ sửa trực tiếp trạng thái từng lịch trong bảng danh sách.
 - [x] Danh sách Admin giữ dạng bảng, mỗi lịch là một dòng.

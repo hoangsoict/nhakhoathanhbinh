@@ -20,16 +20,27 @@ export type WorkingDay = {
 };
 
 export type WeeklySchedule = Record<string, WorkingDay>;
+export type HomepageSlide = {
+  imageUrl: string;
+  eyebrow: string;
+  headline: string;
+  description: string;
+};
+
 export type HomepageContent = {
   brandName: string;
+  logoUrl: string;
   address: string;
+  addressMapUrl: string;
   hotline: string;
+  facebookUrl: string;
   hoursText: string;
   eyebrow: string;
   headline: string;
   description: string;
   heroImageUrl: string;
   heroImageUrls: string[];
+  heroSlides: HomepageSlide[];
 };
 
 export type ClinicSettings = {
@@ -56,14 +67,25 @@ export const defaultWeeklySchedule: WeeklySchedule = {
 
 export const defaultHomepageContent: HomepageContent = {
   brandName: "Thanh Bình Clinic",
+  logoUrl: "",
   address: "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+  addressMapUrl: "",
   hotline: "028 1234 5678",
+  facebookUrl: "",
   hoursText: "Thứ 2 - Chủ nhật, 07:30 - 20:00",
   eyebrow: "Phòng khám đa khoa",
   headline: "Đặt lịch khám bằng số điện thoại",
   description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
   heroImageUrl: "/clinic-hero.png",
-  heroImageUrls: ["/clinic-hero.png"]
+  heroImageUrls: ["/clinic-hero.png"],
+  heroSlides: [
+    {
+      imageUrl: "/clinic-hero.png",
+      eyebrow: "Phòng khám đa khoa",
+      headline: "Đặt lịch khám bằng số điện thoại",
+      description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+    }
+  ]
 };
 
 export function formatDateInVietnam(date: Date) {
@@ -124,18 +146,23 @@ export function validateHomepageContent(value: unknown): HomepageContent {
   }
 
   const raw = value as Record<string, unknown>;
-  const heroImageUrls = validateHeroImageUrls(raw.heroImageUrls, raw.heroImageUrl);
+  const heroSlides = validateHeroSlides(raw);
+  const heroImageUrls = heroSlides.map((slide) => slide.imageUrl);
 
   return {
     brandName: requireTextOrDefault(raw.brandName, defaultHomepageContent.brandName).slice(0, 80),
+    logoUrl: validateOptionalImageUrl(raw.logoUrl).slice(0, 2_000),
     address: requireTextOrDefault(raw.address, defaultHomepageContent.address).slice(0, 160),
+    addressMapUrl: validateHttpUrl(raw.addressMapUrl).slice(0, 2_000),
     hotline: requireTextOrDefault(raw.hotline, defaultHomepageContent.hotline).slice(0, 40),
-    hoursText: requireTextOrDefault(raw.hoursText, defaultHomepageContent.hoursText).slice(0, 120),
+    facebookUrl: validateHttpUrl(raw.facebookUrl).slice(0, 2_000),
+    hoursText: requireTextOrDefault(raw.hoursText, defaultHomepageContent.hoursText).slice(0, 400),
     eyebrow: requireTextOrDefault(raw.eyebrow, defaultHomepageContent.eyebrow).slice(0, 80),
     headline: requireTextOrDefault(raw.headline, defaultHomepageContent.headline).slice(0, 120),
     description: requireTextOrDefault(raw.description, defaultHomepageContent.description).slice(0, 220),
     heroImageUrl: heroImageUrls[0] ?? defaultHomepageContent.heroImageUrl,
-    heroImageUrls
+    heroImageUrls,
+    heroSlides
   };
 }
 
@@ -166,6 +193,14 @@ function validateHeroImageUrl(value: unknown) {
   return defaultHomepageContent.heroImageUrl;
 }
 
+function validateOptionalImageUrl(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+
+  return validateHeroImageUrl(value);
+}
+
 function validateHeroImageUrls(value: unknown, fallbackValue: unknown) {
   const values = Array.isArray(value) ? value : [fallbackValue];
   const validUrls = Array.from(
@@ -177,6 +212,49 @@ function validateHeroImageUrls(value: unknown, fallbackValue: unknown) {
   ).slice(0, 12);
 
   return validUrls.length ? validUrls : [defaultHomepageContent.heroImageUrl];
+}
+
+function validateHeroSlides(raw: Record<string, unknown>) {
+  if (Array.isArray(raw.heroSlides)) {
+    const slides = raw.heroSlides
+      .filter((slide): slide is Record<string, unknown> => Boolean(slide) && typeof slide === "object")
+      .map((slide) => ({
+        imageUrl: validateHeroImageUrl(slide.imageUrl),
+        eyebrow: optionalText(slide.eyebrow).slice(0, 80),
+        headline: optionalText(slide.headline).slice(0, 120),
+        description: optionalText(slide.description).slice(0, 220)
+      }))
+      .slice(0, 12);
+
+    if (slides.length) {
+      return slides;
+    }
+  }
+
+  return validateHeroImageUrls(raw.heroImageUrls, raw.heroImageUrl).map((imageUrl, index) => ({
+    imageUrl,
+    eyebrow: index === 0 ? requireTextOrDefault(raw.eyebrow, defaultHomepageContent.eyebrow).slice(0, 80) : "",
+    headline: index === 0 ? requireTextOrDefault(raw.headline, defaultHomepageContent.headline).slice(0, 120) : "",
+    description: index === 0 ? requireTextOrDefault(raw.description, defaultHomepageContent.description).slice(0, 220) : ""
+  }));
+}
+
+function optionalText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function validateHttpUrl(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  try {
+    const url = new URL(trimmed);
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : "";
+  } catch {
+    return "";
+  }
 }
 
 export function normalizePhone(value: string) {
@@ -233,7 +311,7 @@ export function isWithinWorkingSchedule(schedule: WeeklySchedule, date: string, 
   const workingDay = getScheduleForDate(schedule, date);
   const appointmentTime = normalizeTime(time);
 
-  return workingDay.enabled && appointmentTime >= workingDay.open && appointmentTime < workingDay.close;
+  return workingDay.enabled && appointmentTime >= workingDay.open && appointmentTime <= workingDay.close;
 }
 
 export function isThirtyMinuteSlot(time: string) {
@@ -250,7 +328,7 @@ export function createTimeOptions(open: string, close: string, stepMinutes: numb
   const end = closeHour * 60 + closeMinute;
   const options: string[] = [];
 
-  for (let minutes = start; minutes < end; minutes += stepMinutes) {
+  for (let minutes = start; minutes <= end && minutes < 24 * 60; minutes += stepMinutes) {
     const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
     const minute = String(minutes % 60).padStart(2, "0");
     options.push(`${hour}:${minute}`);

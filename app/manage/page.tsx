@@ -1,10 +1,12 @@
 "use client";
 
 import { ClipboardList, ImageUp, Settings, ShieldCheck, Trash2, Users } from "lucide-react";
+import Image from "next/image";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useMemo, useState } from "react";
 import {
   dayLabels,
+  createTimeOptions,
   defaultHomepageContent,
   defaultSlotCapacity,
   defaultWeeklySchedule,
@@ -13,6 +15,7 @@ import {
   type Appointment,
   type AppointmentStatus,
   type HomepageContent,
+  type HomepageSlide,
   type WeeklySchedule
 } from "@/lib/appointments";
 
@@ -30,6 +33,7 @@ type MaintainUser = {
 
 const today = getAllowedAppointmentDates().today;
 const currentMonthDates = getCurrentMonthDates();
+const fullDayTimeOptions = [...createTimeOptions("00:00", "24:00", 30), "24:00"];
 
 export default function ManagePage() {
   const [token, setToken] = useState("");
@@ -48,16 +52,21 @@ export default function ManagePage() {
   const [slotCapacity, setSlotCapacity] = useState(defaultSlotCapacity);
   const [users, setUsers] = useState<MaintainUser[]>([]);
   const [userPasswordDrafts, setUserPasswordDrafts] = useState<Record<string, string>>({});
+  const [actionLoadingMessage, setActionLoadingMessage] = useState("");
+  const [successPopupMessage, setSuccessPopupMessage] = useState("");
 
   const appointmentGroups = useMemo(() => groupAppointmentsByScheduleTime(appointments), [appointments]);
-  const homepageImageUrls = useMemo(() => {
-    return homepageContent.heroImageUrls?.length ? homepageContent.heroImageUrls : [homepageContent.heroImageUrl];
+  const homepageSlides = useMemo(() => {
+    return homepageContent.heroSlides.length
+      ? homepageContent.heroSlides
+      : [{ imageUrl: homepageContent.heroImageUrl, eyebrow: "", headline: "", description: "" }];
   }, [homepageContent]);
   const isAdmin = role === "admin";
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setState({ type: "idle", message: "" });
+    setActionLoadingMessage("Đang đăng nhập...");
     const form = new FormData(event.currentTarget);
     const response = await fetch("/api/admin/session", {
       method: "POST",
@@ -71,6 +80,7 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setState({ type: "error", message: result.error ?? "Không thể đăng nhập" });
+      setActionLoadingMessage("");
       return;
     }
 
@@ -80,11 +90,13 @@ export default function ManagePage() {
     setSection("appointments");
     setState({ type: "success", message: "Đã đăng nhập" });
 
-    await loadAppointments(result.token);
+    await loadAppointments(result.token, undefined, true);
     if (result.role === "admin") {
-      await loadSettings(result.token);
-      await loadUsers(result.token);
+      await loadSettings(result.token, true);
+      await loadUsers(result.token, true);
     }
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã đăng nhập");
   }
 
   function logout() {
@@ -99,9 +111,10 @@ export default function ManagePage() {
     return { Authorization: `Bearer ${currentToken}` };
   }
 
-  async function loadAppointments(currentToken = token, event?: FormEvent<HTMLFormElement>) {
+  async function loadAppointments(currentToken = token, event?: FormEvent<HTMLFormElement>, silent = false) {
     event?.preventDefault();
     setState({ type: "idle", message: "" });
+    if (!silent) setActionLoadingMessage("Đang tải danh sách lịch...");
     const params = new URLSearchParams();
     if (adminDate) params.set("date", adminDate);
     params.set("status", adminStatus);
@@ -113,16 +126,23 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setState({ type: "error", message: result.error ?? "Không thể tải danh sách" });
+      if (!silent) setActionLoadingMessage("");
       return;
     }
 
     setAppointments(result.appointments);
-    setState({ type: "success", message: `${result.appointments.length} lịch hẹn` });
+    const message = `${result.appointments.length} lịch hẹn`;
+    setState({ type: "success", message });
+    if (!silent) {
+      setActionLoadingMessage("");
+      setSuccessPopupMessage(`Đã tải ${message}`);
+    }
   }
 
   async function setAppointmentStatus(appointment: Appointment, status: AppointmentStatus) {
     if (appointment.status === status) return;
     setState({ type: "idle", message: "" });
+    setActionLoadingMessage("Đang cập nhật trạng thái...");
 
     const response = await fetch("/api/admin/appointments", {
       method: "PATCH",
@@ -133,20 +153,25 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setState({ type: "error", message: result.error ?? "Không thể cập nhật trạng thái" });
+      setActionLoadingMessage("");
       return;
     }
 
     setState({ type: "success", message: "Đã cập nhật trạng thái lịch" });
-    await loadAppointments();
+    await loadAppointments(token, undefined, true);
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã cập nhật trạng thái lịch");
   }
 
-  async function loadSettings(currentToken = token) {
+  async function loadSettings(currentToken = token, silent = false) {
     setSettingsState({ type: "idle", message: "" });
+    if (!silent) setActionLoadingMessage("Đang tải cấu hình...");
     const response = await fetch("/api/admin/settings", { headers: authHeaders(currentToken) });
     const result = await readJsonResponse(response);
 
     if (!response.ok) {
       setSettingsState({ type: "error", message: result.error ?? "Không thể tải cấu hình" });
+      if (!silent) setActionLoadingMessage("");
       return;
     }
 
@@ -155,11 +180,16 @@ export default function ManagePage() {
     setHomepageContent(result.homepageContent ?? defaultHomepageContent);
     setSlotCapacity(result.slotCapacity ?? defaultSlotCapacity);
     setSettingsState({ type: "success", message: "Đã tải cấu hình" });
+    if (!silent) {
+      setActionLoadingMessage("");
+      setSuccessPopupMessage("Đã tải cấu hình");
+    }
   }
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSettingsState({ type: "idle", message: "" });
+    setActionLoadingMessage("Đang lưu cấu hình...");
     const response = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -169,6 +199,7 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setSettingsState({ type: "error", message: result.error ?? "Không thể lưu cấu hình" });
+      setActionLoadingMessage("");
       return;
     }
 
@@ -177,6 +208,8 @@ export default function ManagePage() {
     setHomepageContent(result.homepageContent ?? homepageContent);
     setSlotCapacity(result.slotCapacity ?? slotCapacity);
     setSettingsState({ type: "success", message: "Đã lưu cấu hình" });
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã lưu cấu hình");
   }
 
   function updateWorkingDay(day: string, field: "enabled" | "open" | "close", value: boolean | string) {
@@ -200,13 +233,31 @@ export default function ManagePage() {
     setHomepageContent((current) => ({ ...current, [field]: value }));
   }
 
-  function setHomepageImages(imageUrls: string[]) {
-    const nextImageUrls = imageUrls.length ? imageUrls : defaultHomepageContent.heroImageUrls;
+  function setHomepageSlides(slides: HomepageSlide[]) {
+    const nextSlides = slides.length ? slides : defaultHomepageContent.heroSlides;
+    const nextImageUrls = nextSlides.map((slide) => slide.imageUrl);
     setHomepageContent((current) => ({
       ...current,
       heroImageUrl: nextImageUrls[0],
-      heroImageUrls: nextImageUrls
+      heroImageUrls: nextImageUrls,
+      heroSlides: nextSlides
     }));
+  }
+
+  function updateHomepageSlide(index: number, field: keyof HomepageSlide, value: string) {
+    setHomepageContent((current) => {
+      const nextSlides = current.heroSlides.map((slide, slideIndex) => {
+        return slideIndex === index ? { ...slide, [field]: value } : slide;
+      });
+      const nextImageUrls = nextSlides.map((slide) => slide.imageUrl);
+
+      return {
+        ...current,
+        heroImageUrl: nextImageUrls[0] ?? defaultHomepageContent.heroImageUrl,
+        heroImageUrls: nextImageUrls,
+        heroSlides: nextSlides
+      };
+    });
   }
 
   async function updateHomepageImages(files: FileList | null) {
@@ -224,6 +275,7 @@ export default function ManagePage() {
     }
 
     setSettingsState({ type: "idle", message: "Đang upload ảnh..." });
+    setActionLoadingMessage("Đang upload ảnh slider...");
     const uploadedImageUrls: string[] = [];
 
     for (const file of selectedFiles) {
@@ -238,19 +290,61 @@ export default function ManagePage() {
 
       if (!response.ok) {
         setSettingsState({ type: "error", message: result.error ?? "Không thể upload ảnh" });
+        setActionLoadingMessage("");
         return;
       }
 
       uploadedImageUrls.push(result.imageUrl);
     }
 
-    const nextImageUrls = [...homepageImageUrls, ...uploadedImageUrls];
-    setHomepageImages(nextImageUrls);
-    await persistHomepageImages(nextImageUrls);
+    const nextSlides = [
+      ...homepageSlides,
+      ...uploadedImageUrls.map((imageUrl) => ({ imageUrl, eyebrow: "", headline: "", description: "" }))
+    ];
+    setHomepageSlides(nextSlides);
+    await persistHomepageSlides(nextSlides, true);
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã upload và lưu ảnh slider");
+  }
+
+  async function updateHomepageLogo(file: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSettingsState({ type: "error", message: "Vui lòng chọn file ảnh logo" });
+      return;
+    }
+
+    if (file.size > 2_000_000) {
+      setSettingsState({ type: "error", message: "Logo cần nhỏ hơn 2MB" });
+      return;
+    }
+
+    setSettingsState({ type: "idle", message: "Đang upload logo..." });
+    setActionLoadingMessage("Đang upload logo...");
+    const formData = new FormData();
+    formData.set("image", file);
+    const response = await fetch("/api/admin/homepage-image", {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData
+    });
+    const result = await readJsonResponse(response);
+
+    if (!response.ok) {
+      setSettingsState({ type: "error", message: result.error ?? "Không thể upload logo" });
+      setActionLoadingMessage("");
+      return;
+    }
+
+    updateHomepageContent("logoUrl", result.imageUrl);
+    setSettingsState({ type: "success", message: "Đã upload logo, bấm lưu để áp dụng" });
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã upload logo");
   }
 
   async function deleteHomepageImage(imageUrl: string) {
-    const nextImageUrls = homepageImageUrls.filter((currentImageUrl) => currentImageUrl !== imageUrl);
+    const nextSlides = homepageSlides.filter((slide) => slide.imageUrl !== imageUrl);
+    setActionLoadingMessage("Đang xóa ảnh slider...");
 
     if (!imageUrl.startsWith("/")) {
       setSettingsState({ type: "idle", message: "Đang xóa ảnh..." });
@@ -263,20 +357,25 @@ export default function ManagePage() {
 
       if (!response.ok) {
         setSettingsState({ type: "error", message: result.error ?? "Không thể xóa ảnh" });
+        setActionLoadingMessage("");
         return;
       }
     }
 
-    setHomepageImages(nextImageUrls);
-    await persistHomepageImages(nextImageUrls);
+    setHomepageSlides(nextSlides);
+    await persistHomepageSlides(nextSlides, true);
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã xóa ảnh slider");
   }
 
-  async function persistHomepageImages(imageUrls: string[]) {
-    const nextImageUrls = imageUrls.length ? imageUrls : defaultHomepageContent.heroImageUrls;
+  async function persistHomepageSlides(slides: HomepageSlide[], silent = false) {
+    const nextSlides = slides.length ? slides : defaultHomepageContent.heroSlides;
+    const nextImageUrls = nextSlides.map((slide) => slide.imageUrl);
     const nextHomepageContent = {
       ...homepageContent,
       heroImageUrl: nextImageUrls[0],
-      heroImageUrls: nextImageUrls
+      heroImageUrls: nextImageUrls,
+      heroSlides: nextSlides
     };
 
     const response = await fetch("/api/admin/settings", {
@@ -288,29 +387,41 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setSettingsState({ type: "error", message: result.error ?? "Không thể lưu slider ảnh" });
+      if (!silent) setActionLoadingMessage("");
       return;
     }
 
     setHomepageContent(result.homepageContent ?? nextHomepageContent);
     setSettingsState({ type: "success", message: "Đã lưu slider ảnh" });
+    if (!silent) {
+      setActionLoadingMessage("");
+      setSuccessPopupMessage("Đã lưu slider ảnh");
+    }
   }
 
-  async function loadUsers(currentToken = token) {
+  async function loadUsers(currentToken = token, silent = false) {
+    if (!silent) setActionLoadingMessage("Đang tải user...");
     const response = await fetch("/api/admin/users", { headers: authHeaders(currentToken) });
     const result = await readJsonResponse(response);
 
     if (!response.ok) {
       setUserState({ type: "error", message: result.error ?? "Không thể tải user" });
+      if (!silent) setActionLoadingMessage("");
       return;
     }
 
     setUsers(result.users ?? []);
     setUserPasswordDrafts({});
+    if (!silent) {
+      setActionLoadingMessage("");
+      setSuccessPopupMessage("Đã tải danh sách user");
+    }
   }
 
   async function createMaintainUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setUserState({ type: "idle", message: "" });
+    setActionLoadingMessage("Đang tạo user maintain...");
     const form = new FormData(event.currentTarget);
     const response = await fetch("/api/admin/users", {
       method: "POST",
@@ -321,15 +432,19 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setUserState({ type: "error", message: result.error ?? "Không thể tạo user" });
+      setActionLoadingMessage("");
       return;
     }
 
     event.currentTarget.reset();
     setUserState({ type: "success", message: "Đã tạo user maintain" });
-    await loadUsers();
+    await loadUsers(token, true);
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã tạo user maintain");
   }
 
   async function setMaintainUserActive(user: MaintainUser, active: boolean) {
+    setActionLoadingMessage("Đang cập nhật user...");
     const response = await fetch("/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -339,11 +454,14 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setUserState({ type: "error", message: result.error ?? "Không thể cập nhật user" });
+      setActionLoadingMessage("");
       return;
     }
 
     setUserState({ type: "success", message: "Đã cập nhật user" });
-    await loadUsers();
+    await loadUsers(token, true);
+    setActionLoadingMessage("");
+    setSuccessPopupMessage("Đã cập nhật user");
   }
 
   async function resetMaintainUserPassword(user: MaintainUser) {
@@ -353,6 +471,7 @@ export default function ManagePage() {
       return;
     }
 
+    setActionLoadingMessage("Đang đặt lại mật khẩu...");
     const response = await fetch("/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -362,11 +481,14 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setUserState({ type: "error", message: result.error ?? "Không thể đặt lại mật khẩu" });
+      setActionLoadingMessage("");
       return;
     }
 
     setUserPasswordDrafts((current) => ({ ...current, [user.id]: "" }));
     setUserState({ type: "success", message: `Đã đặt lại mật khẩu cho ${user.username}` });
+    setActionLoadingMessage("");
+    setSuccessPopupMessage(`Đã đặt lại mật khẩu cho ${user.username}`);
   }
 
   async function deleteMaintainUser(user: MaintainUser) {
@@ -375,6 +497,7 @@ export default function ManagePage() {
       return;
     }
 
+    setActionLoadingMessage("Đang xóa user...");
     const response = await fetch("/api/admin/users", {
       method: "DELETE",
       headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -384,16 +507,21 @@ export default function ManagePage() {
 
     if (!response.ok) {
       setUserState({ type: "error", message: result.error ?? "Không thể xóa user" });
+      setActionLoadingMessage("");
       return;
     }
 
     setUserState({ type: "success", message: `Đã xóa user ${user.username}` });
-    await loadUsers();
+    await loadUsers(token, true);
+    setActionLoadingMessage("");
+    setSuccessPopupMessage(`Đã xóa user ${user.username}`);
   }
 
   if (!token || !role) {
     return (
       <main className="managePage">
+        {actionLoadingMessage && <BlockingOverlay message={actionLoadingMessage} />}
+        {successPopupMessage && <SuccessPopup message={successPopupMessage} onClose={() => setSuccessPopupMessage("")} />}
         <form className="panel adminLogin" onSubmit={login}>
           <Field label="User" name="username" autoComplete="username" required />
           <Field label="Password" name="password" type="password" autoComplete="current-password" required />
@@ -409,6 +537,8 @@ export default function ManagePage() {
 
   return (
     <main className="managePage">
+      {actionLoadingMessage && <BlockingOverlay message={actionLoadingMessage} />}
+      {successPopupMessage && <SuccessPopup message={successPopupMessage} onClose={() => setSuccessPopupMessage("")} />}
       <section className="panel">
         <div className="adminWorkspace">
           <div className="adminHeader">
@@ -500,17 +630,15 @@ export default function ManagePage() {
                         />
                         <span>{label}</span>
                       </label>
-                      <Field
+                      <TimeSelect24
                         label="Mở cửa"
                         name={`open-${day}`}
-                        type="time"
                         value={schedule.open}
                         onChange={(value) => updateWorkingDay(day, "open", value)}
                       />
-                      <Field
+                      <TimeSelect24
                         label="Đóng cửa"
                         name={`close-${day}`}
-                        type="time"
                         value={schedule.close}
                         onChange={(value) => updateWorkingDay(day, "close", value)}
                       />
@@ -547,15 +675,19 @@ export default function ManagePage() {
               </div>
               <div className="homepageConfig">
                 <Field label="Tên phòng khám" name="brandName" value={homepageContent.brandName} onChange={(value) => updateHomepageContent("brandName", value)} required />
-                <Field label="Địa chỉ" name="address" value={homepageContent.address} onChange={(value) => updateHomepageContent("address", value)} required />
-                <Field label="Hotline" name="hotline" value={homepageContent.hotline} onChange={(value) => updateHomepageContent("hotline", value)} required />
-                <Field label="Giờ làm việc hiển thị" name="hoursText" value={homepageContent.hoursText} onChange={(value) => updateHomepageContent("hoursText", value)} required />
-                <Field label="Nhãn nhỏ" name="eyebrow" value={homepageContent.eyebrow} onChange={(value) => updateHomepageContent("eyebrow", value)} required />
-                <Field label="Tiêu đề chính" name="headline" value={homepageContent.headline} onChange={(value) => updateHomepageContent("headline", value)} required />
-                <label className="wide">
-                  <span>Mô tả</span>
-                  <textarea value={homepageContent.description} onChange={(event) => updateHomepageContent("description", event.target.value)} rows={4} required />
+                <label>
+                  <span>Logo phòng khám</span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => updateHomepageLogo(event.target.files?.[0] ?? null)} />
                 </label>
+                {homepageContent.logoUrl && (
+                  <div className="logoPreview">
+                    <Image alt="Logo phòng khám hiện tại" height={54} src={homepageContent.logoUrl} unoptimized width={160} />
+                  </div>
+                )}
+                <Field label="Địa chỉ" name="address" value={homepageContent.address} onChange={(value) => updateHomepageContent("address", value)} required />
+                <Field label="Link Google Maps" name="addressMapUrl" type="url" value={homepageContent.addressMapUrl} onChange={(value) => updateHomepageContent("addressMapUrl", value)} />
+                <Field label="Hotline" name="hotline" value={homepageContent.hotline} onChange={(value) => updateHomepageContent("hotline", value)} required />
+                <Field label="Link Facebook" name="facebookUrl" type="url" value={homepageContent.facebookUrl} onChange={(value) => updateHomepageContent("facebookUrl", value)} />
                 <label className="wide">
                   <span>Ảnh slider trang chủ</span>
                   <input
@@ -566,14 +698,34 @@ export default function ManagePage() {
                   />
                 </label>
                 <div className="heroImageGallery wide">
-                  {homepageImageUrls.map((imageUrl, index) => (
-                    <article className="heroImageItem" key={`${imageUrl}-${index}`}>
+                  {homepageSlides.map((slide, index) => (
+                    <article className="heroImageItem" key={`${slide.imageUrl}-${index}`}>
                       <div
                         aria-label={`Ảnh slider ${index + 1}`}
                         role="img"
-                        style={{ backgroundImage: `url("${imageUrl}")` }}
+                        style={{ backgroundImage: `url("${slide.imageUrl}")` }}
                       />
-                      <button className="danger" type="button" onClick={() => deleteHomepageImage(imageUrl)}>
+                      <Field
+                        label="Nhãn nhỏ"
+                        name={`slide-eyebrow-${index}`}
+                        value={slide.eyebrow}
+                        onChange={(value) => updateHomepageSlide(index, "eyebrow", value)}
+                      />
+                      <Field
+                        label="Tiêu đề chính"
+                        name={`slide-headline-${index}`}
+                        value={slide.headline}
+                        onChange={(value) => updateHomepageSlide(index, "headline", value)}
+                      />
+                      <label>
+                        <span>Mô tả</span>
+                        <textarea
+                          value={slide.description}
+                          onChange={(event) => updateHomepageSlide(index, "description", event.target.value)}
+                          rows={3}
+                        />
+                      </label>
+                      <button className="danger" type="button" onClick={() => deleteHomepageImage(slide.imageUrl)}>
                         <Trash2 aria-hidden="true" />
                         Xóa ảnh
                       </button>
@@ -736,6 +888,31 @@ function Field({
   );
 }
 
+function TimeSelect24({
+  label,
+  name,
+  value,
+  onChange
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label>
+      <span>{label}</span>
+      <select name={name} value={value} onChange={(event) => onChange(event.target.value)}>
+        {fullDayTimeOptions.map((time) => (
+          <option value={time} key={time}>
+            {time}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function StatusSelect({
   name,
   value,
@@ -758,6 +935,29 @@ function StatusSelect({
 function FormMessage({ state }: { state: ApiState }) {
   if (state.type === "idle" || !state.message) return null;
   return <p className={`formMessage ${state.type}`}>{state.message}</p>;
+}
+
+function BlockingOverlay({ message }: { message: string }) {
+  return (
+    <div className="blockingOverlay" role="alert" aria-live="assertive">
+      <div className="loadingCard">
+        <span className="loadingSpinner" aria-hidden="true" />
+        <strong>{message}</strong>
+        <span>Vui lòng chờ trong giây lát</span>
+      </div>
+    </div>
+  );
+}
+
+function SuccessPopup({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div className="successDialog" role="dialog" aria-modal="true" aria-label="Thông báo thành công" onClick={onClose}>
+      <div className="successCard" onClick={(event) => event.stopPropagation()}>
+        <strong>Thành công</strong>
+        <p>{message}</p>
+      </div>
+    </div>
+  );
 }
 
 async function readJsonResponse(response: Response) {
@@ -813,7 +1013,8 @@ function formatDateTime(value: string) {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    hour12: false
   }).format(new Date(value));
 }
 

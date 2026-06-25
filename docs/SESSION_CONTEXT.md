@@ -79,10 +79,15 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Mỗi lịch là một dòng trong bảng; chỉ trạng thái được sửa trực tiếp bằng dropdown.
 - Admin đổi trạng thái trực tiếp, không mở các thông tin khác để sửa trong bảng.
 - Admin cấu hình lịch làm việc theo ngày trong tuần.
+- Giờ đóng cửa trong cấu hình lịch làm việc được hiểu là giờ bắt đầu ca cuối cùng được đặt; ví dụ 08:00-15:00 có slot 15:00.
 - Admin cấu hình ngày nghỉ nội bộ trong tháng hiện tại.
-- Admin cấu hình slider ảnh trang chủ bằng upload nhiều ảnh trong tab `Thông tin trang chủ`; file ảnh lưu ở Supabase Storage bucket public `clinic-assets`, URL lưu trong `homepage_content.heroImageUrls`, còn `heroImageUrl` giữ ảnh đầu tiên để tương thích dữ liệu cũ.
+- Admin cấu hình slider ảnh trang chủ bằng upload nhiều ảnh trong tab `Thông tin trang chủ`; file ảnh lưu ở Supabase Storage bucket public `clinic-assets`, từng slide lưu trong `homepage_content.heroSlides`, còn `heroImageUrls`/`heroImageUrl` giữ để tương thích dữ liệu cũ.
+- Tên phòng khám, logo, địa chỉ, link Google Maps, hotline, link Facebook là thông tin chung của trang chủ; nhãn nhỏ, tiêu đề chính và mô tả là nội dung riêng theo từng ảnh slide và có thể bỏ trống.
+- Trang chủ dùng logo ở header nếu Admin đã upload; nếu chưa có logo thì dùng icon mặc định.
+- Link Facebook hiển thị ở header và dải thông tin trang chủ; `hoursText` còn giữ để tương thích dữ liệu cũ nhưng không còn là nội dung chính.
+- Địa chỉ trang chủ có thể bấm mở Google Maps khi Admin cấu hình `homepage_content.addressMapUrl`.
 - Admin có thể xóa từng ảnh khỏi slider; nếu ảnh nằm trong Supabase Storage bucket `clinic-assets` thì API cũng xóa object tương ứng trên storage.
-- Trang chủ hiển thị hero dạng image slide, tự chuyển ảnh theo danh sách `homepage_content.heroImageUrls`.
+- Trang chủ hiển thị hero dạng image slide theo `homepage_content.heroSlides`, có chấm để bấm chuyển ảnh và tự chuyển sau 30 giây nếu không thao tác.
 - Trang chủ chờ tải config admin trước khi render, không hiển thị trước nội dung mặc định cũ.
 - API chặn đặt/sửa ngoài lịch làm việc.
 - API chặn đặt/sửa vào ngày nghỉ nội bộ.
@@ -134,7 +139,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - `created_at` của `appointments` là thời điểm đặt lịch thực tế, dùng để ưu tiên thứ tự khách trong cùng giờ khám.
 - `clinic_settings` lưu cấu hình: `weekly_schedule`, `internal_holidays`, `homepage_content`, `slot_capacity`.
 - `staff_users` lưu user `maintain` với password hash PBKDF2, bật/tắt bằng `active`.
-- `homepage_content` có `heroImageUrls` để lưu danh sách URL ảnh slider từ Supabase Storage; `heroImageUrl` vẫn được set bằng ảnh đầu tiên cho dữ liệu cũ.
+- `homepage_content` có `heroSlides` để lưu ảnh và nội dung từng slide từ Supabase Storage; `heroImageUrls`/`heroImageUrl` vẫn được set để tương thích dữ liệu cũ.
 - `supabase/schema.sql` được viết để có thể chạy lại nhiều lần bằng `if not exists`/`add column if not exists`.
 - `.env.local`, `.tools`, `.next`, `node_modules` không commit.
 - `.env.example` chỉ chứa placeholder.

@@ -16,6 +16,22 @@ cp .env.example .env.local
 npm run dev
 ```
 
+Hoặc chạy dev server dạng nền để tự start/stop/restart:
+
+```bash
+npm run dev:start
+npm run dev:status
+npm run dev:restart
+npm run dev:stop
+npm run dev:logs
+```
+
+Mặc định script chạy ở `http://localhost:3002`. Có thể đổi port:
+
+```bash
+PORT=3000 npm run dev:start
+```
+
 Cập nhật `.env.local` bằng thông tin Supabase:
 
 ```bash

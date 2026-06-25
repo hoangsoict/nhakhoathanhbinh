@@ -37,10 +37,12 @@ Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không
 - Role `maintain` chỉ xem danh sách đặt lịch và cập nhật trạng thái.
 - Role `admin` xem/cập nhật danh sách đặt lịch, cấu hình lịch làm việc, thông tin trang chủ, số khách tối đa mỗi ca, và quản lý user `maintain`.
 - `appointments.created_at` là thời điểm đặt lịch thực tế, dùng để ưu tiên khách đặt trước trong cùng giờ khám.
-- Ảnh slider trang chủ upload qua Admin lưu ở Supabase Storage bucket public `clinic-assets`; config lưu danh sách URL trong `homepage_content.heroImageUrls` và giữ `homepage_content.heroImageUrl` là ảnh đầu tiên để tương thích dữ liệu cũ.
+- Ảnh slider trang chủ upload qua Admin lưu ở Supabase Storage bucket public `clinic-assets`; config lưu danh sách slide trong `homepage_content.heroSlides`, giữ `homepage_content.heroImageUrls`/`heroImageUrl` để tương thích dữ liệu cũ.
+- `homepage_content.brandName`, `logoUrl`, `address`, `addressMapUrl`, `hotline`, `facebookUrl` là thông tin chung; `hoursText` còn giữ để tương thích dữ liệu cũ nhưng không còn hiển thị chính trên trang chủ. `eyebrow`, `headline`, `description` là nội dung riêng từng slide và được phép bỏ trống.
 - Mỗi số điện thoại tối đa 01 lịch `Đã đặt` trong cùng ngày khám.
 - Nếu khách đã có lịch `Đã đặt` hoặc `Không đến` trong ngày khám thì không cho đặt lại ngày đó.
 - Mỗi ca khám dài 30 phút.
+- Trong cấu hình lịch làm việc, `close` là giờ bắt đầu ca cuối cùng được đặt; ví dụ 08:00-15:00 có các ca từ 08:00 đến 15:00.
 - Mỗi ca tối đa theo cấu hình `slot_capacity`, mặc định 04 khách.
 - Lịch `Đã hủy` không chiếm slot.
 - Lịch `Đã đặt`, `Đã đến`, `Hoàn thành` chiếm slot.
