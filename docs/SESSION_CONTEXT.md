@@ -55,7 +55,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 
 - Trang chủ phòng khám/nha khoa Thanh Bình có hero, hotline, địa chỉ, giờ làm việc hiển thị.
 - Admin cấu hình thông tin trang chủ: tên phòng khám, địa chỉ, hotline, giờ hiển thị, nhãn nhỏ, tiêu đề, mô tả.
-- Khách đặt lịch bằng họ tên, số điện thoại, ngày khám, giờ khám; không có cột/trường tuổi; mục đích khám bắt buộc chọn `Khám và điều trị mới` hoặc `Đang điều trị`.
+- Khách đặt lịch bằng họ tên, số điện thoại, ngày khám, giờ khám; không có cột/trường tuổi; mục đích khám bắt buộc chọn `Khám và điều trị mới` hoặc `Đang điều trị`, mặc định là `Khám và điều trị mới`.
 - Số điện thoại khách phải là số di động Việt Nam chuẩn 10 chữ số bắt đầu bằng `03`, `05`, `07`, `08` hoặc `09`; không nhận/lưu dạng `+84`, có khoảng trắng hoặc dấu gạch.
 - Khách tra cứu lịch bằng số điện thoại.
 - Khách tra cứu bằng số điện thoại thấy tất cả lịch đã tìm thấy; chỉ lịch `Đã đặt` còn ở tương lai mới hiện thao tác sửa/hủy.
@@ -64,6 +64,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Khách không cần tài khoản, không đăng nhập, không dùng mã lịch hẹn.
 - Ngày khám cho chọn trong phạm vi `booking_advance_days` do admin cấu hình; ví dụ 3 là hôm nay, ngày mai và ngày kia.
 - Giờ khám chọn bằng dropdown, mỗi slot cách 30 phút.
+- Form đặt lịch hiển thị lưu ý bệnh nhân đến trước lịch hẹn 10 phút dưới phần giờ khám.
 - Mỗi số điện thoại chỉ có tối đa một lịch trạng thái `booked` trong cùng ngày khám.
 - Nếu số điện thoại đã có lịch `booked` hoặc `no_show` trong ngày khám thì khách không được đặt lại ngày đó.
 - Chỉ cho đặt/sửa sang giờ khám chưa qua.
@@ -84,7 +85,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Admin đổi trạng thái trực tiếp, không mở các thông tin khác để sửa trong bảng.
 - Admin cấu hình lịch làm việc theo ngày trong tuần.
 - Giờ đóng cửa trong cấu hình lịch làm việc được hiểu là giờ bắt đầu ca cuối cùng được đặt; ví dụ 08:00-15:00 có slot 15:00.
-- Admin cấu hình ngày nghỉ nội bộ trong tháng hiện tại.
+- Admin cấu hình ngày nghỉ nội bộ theo 2 khối tháng hiện tại và tháng tới.
 - Admin cấu hình slider ảnh trang chủ bằng upload nhiều ảnh trong tab `Thông tin trang chủ`; file ảnh lưu ở Supabase Storage bucket public `clinic-assets`, từng slide lưu trong `homepage_content.heroSlides`, còn `heroImageUrls`/`heroImageUrl` giữ để tương thích dữ liệu cũ.
 - Tên phòng khám, logo, địa chỉ, link Google Maps, hotline, link Facebook là thông tin chung của trang chủ; nhãn nhỏ, tiêu đề chính và mô tả là nội dung riêng theo từng ảnh slide và có thể bỏ trống.
 - Trang chủ dùng logo ở header nếu Admin đã upload; nếu chưa có logo thì dùng icon mặc định.

@@ -32,7 +32,6 @@ Website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng không
 ## Business Rules
 
 - Khách hàng không cần tài khoản, không đăng nhập.
-- Không dùng mã lịch hẹn cho khách.
 - Khách dùng số điện thoại để đặt, tra cứu, sửa, hủy.
 - Role `maintain` chỉ xem danh sách đặt lịch và cập nhật trạng thái.
 - Role `admin` xem/cập nhật danh sách đặt lịch, cấu hình lịch làm việc, thông tin trang chủ, số khách tối đa mỗi ca, và quản lý user `maintain`.

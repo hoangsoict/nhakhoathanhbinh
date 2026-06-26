@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Phòng Khám Đa Khoa Thanh Bình",
+  title: "Nha Khoa Thanh Bình",
   description: "Đặt lịch khám nhanh bằng số điện thoại"
 };
 

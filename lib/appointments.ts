@@ -128,6 +128,30 @@ export function getCurrentMonthDates() {
   const today = formatDateInVietnam(new Date());
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
+
+  return getMonthDates(year, month);
+}
+
+export function getHolidayMonthGroups() {
+  const today = formatDateInVietnam(new Date());
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7));
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+
+  return [
+    {
+      label: `Tháng ${String(month).padStart(2, "0")}/${year}`,
+      dates: getMonthDates(year, month)
+    },
+    {
+      label: `Tháng ${String(nextMonth).padStart(2, "0")}/${nextYear}`,
+      dates: getMonthDates(nextYear, nextMonth)
+    }
+  ];
+}
+
+function getMonthDates(year: number, month: number) {
   const daysInMonth = new Date(year, month, 0).getDate();
 
   return Array.from({ length: daysInMonth }, (_, index) => {
@@ -141,11 +165,11 @@ export function validateInternalHolidays(value: unknown) {
     return [];
   }
 
-  const currentMonthDates = new Set(getCurrentMonthDates());
+  const visibleHolidayDates = new Set(getHolidayMonthGroups().flatMap((group) => group.dates));
   return Array.from(
     new Set(
       value.filter((date): date is string => {
-        return typeof date === "string" && currentMonthDates.has(date);
+        return typeof date === "string" && visibleHolidayDates.has(date);
       })
     )
   ).sort();

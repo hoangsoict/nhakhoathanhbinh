@@ -176,7 +176,7 @@ export default function Home() {
     setBookingSlots([]);
     setIsBookingSubmitting(false);
     setActionLoadingMessage("");
-    setBookingState({ type: "success", message: "Lịch khám đã được ghi nhận" });
+    setBookingState({ type: "idle", message: "" });
     setSuccessPopupMessage("Lịch khám đã được ghi nhận");
   }
 
@@ -294,10 +294,7 @@ export default function Home() {
           </button>
         </div>
         <div className="headerInfo">
-          <div>
-            <MapPin aria-hidden="true" />
-            <AddressLink content={homepageContent} />
-          </div>
+          <AddressLink content={homepageContent} />
           {homepageContent.facebookUrl && <FacebookLink content={homepageContent} />}
         </div>
       </nav>
@@ -371,8 +368,9 @@ export default function Home() {
               }
               required
             />
+            <p className="appointmentTimeNote">Lưu ý: Bệnh nhân đến trước lịch hẹn 10 phút</p>
             {bookingSlotsState.message && <p className="slotHint">{bookingSlotsState.message}</p>}
-            <PurposeOptions className="wide" />
+            <PurposeOptions className="wide" defaultValue="new_treatment" />
             <FormMessage state={bookingState} />
             <button className="primaryAction" type="submit" disabled={isBookingSubmitting}>
               <CalendarCheck aria-hidden="true" />
@@ -551,24 +549,28 @@ function EditableAppointmentForm({
 
 function AddressLink({ content }: { content: HomepageContent }) {
   if (!content.addressMapUrl) {
-    return <span>{content.address}</span>;
+    return (
+      <div className="headerInfoItem">
+        <MapPin aria-hidden="true" />
+        <span>{content.address}</span>
+      </div>
+    );
   }
 
   return (
-    <a href={content.addressMapUrl} target="_blank" rel="noopener noreferrer">
-      {content.address}
+    <a className="headerInfoItem" href={content.addressMapUrl} target="_blank" rel="noopener noreferrer">
+      <MapPin aria-hidden="true" />
+      <span>{content.address}</span>
     </a>
   );
 }
 
 function FacebookLink({ content }: { content: HomepageContent }) {
   return (
-    <div>
+    <a className="headerInfoItem" href={content.facebookUrl} target="_blank" rel="noopener noreferrer">
       <ExternalLink aria-hidden="true" />
-      <a href={content.facebookUrl} target="_blank" rel="noopener noreferrer">
-        Facebook
-      </a>
-    </div>
+      <span>Facebook</span>
+    </a>
   );
 }
 
@@ -695,7 +697,7 @@ function isValidatableElement(target: EventTarget | null): target is Validatable
 
 function clearFieldValidation(event: FormEvent<HTMLFormElement>) {
   if (isValidatableElement(event.target)) {
-    event.target.setCustomValidity("");
+    clearControlValidation(event.target);
   }
 }
 
@@ -704,7 +706,26 @@ function handleInvalidField(event: FormEvent<HTMLFormElement>) {
     return;
   }
 
+  clearControlValidation(event.target);
+  if (event.target.validity.valid) {
+    return;
+  }
+
   event.target.setCustomValidity(getVietnameseValidationMessage(event.target));
+}
+
+function clearControlValidation(control: ValidatableElement) {
+  if (control instanceof HTMLInputElement && control.type === "radio") {
+    const controls = control.form ? Array.from(control.form.elements) : [];
+    controls.forEach((field) => {
+      if (field instanceof HTMLInputElement && field.type === "radio" && field.name === control.name) {
+        field.setCustomValidity("");
+      }
+    });
+    return;
+  }
+
+  control.setCustomValidity("");
 }
 
 function getVietnameseValidationMessage(control: ValidatableElement) {

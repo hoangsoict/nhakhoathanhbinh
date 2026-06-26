@@ -13,7 +13,7 @@ import {
   defaultSlotCapacity,
   defaultWeeklySchedule,
   getAllowedAppointmentDates,
-  getCurrentMonthDates,
+  getHolidayMonthGroups,
   type Appointment,
   type AppointmentStatus,
   type HomepageContent,
@@ -34,7 +34,7 @@ type MaintainUser = {
 };
 
 const today = getAllowedAppointmentDates().today;
-const currentMonthDates = getCurrentMonthDates();
+const holidayMonthGroups = getHolidayMonthGroups();
 const fullDayTimeOptions = [...createTimeOptions("00:00", "24:00", 30), "24:00"];
 
 export default function ManagePage() {
@@ -675,17 +675,24 @@ export default function ManagePage() {
                 })}
               </div>
               <div className="holidaySection">
-                <strong>Ngày nghỉ nội bộ trong tháng hiện tại</strong>
-                <div className="holidayGrid">
-                  {currentMonthDates.map((date) => (
-                    <label className="holidayItem" key={date}>
-                      <input
-                        type="checkbox"
-                        checked={internalHolidays.includes(date)}
-                        onChange={() => toggleInternalHoliday(date)}
-                      />
-                      <span>{formatShortDate(date)}</span>
-                    </label>
+                <strong>Ngày nghỉ nội bộ</strong>
+                <div className="holidayMonthGroups">
+                  {holidayMonthGroups.map((monthGroup) => (
+                    <section className="holidayMonthBlock" key={monthGroup.label}>
+                      <h3>{monthGroup.label}</h3>
+                      <div className="holidayGrid">
+                        {monthGroup.dates.map((date) => (
+                          <label className="holidayItem" key={date}>
+                            <input
+                              type="checkbox"
+                              checked={internalHolidays.includes(date)}
+                              onChange={() => toggleInternalHoliday(date)}
+                            />
+                            <span>{formatShortDate(date)}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </section>
                   ))}
                 </div>
               </div>

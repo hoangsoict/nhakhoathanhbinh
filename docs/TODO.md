@@ -49,10 +49,11 @@
 - [x] Admin upload nhiều ảnh slider trang chủ lên Supabase Storage bucket public `clinic-assets`.
 - [x] Lưu ảnh và nội dung riêng từng slide vào cấu hình `homepage_content.heroSlides`, giữ `heroImageUrls`/`heroImageUrl` để tương thích dữ liệu cũ.
 - [x] Trang chủ hiển thị ảnh hero dạng image slide, có chấm bấm chuyển ảnh và tự chuyển sau 30 giây.
-- [x] Form đặt lịch công khai không còn hỏi tuổi; mục đích khám bắt buộc chọn `Khám và điều trị mới` hoặc `Đang điều trị`.
+- [x] Form đặt lịch công khai không còn hỏi tuổi; mục đích khám bắt buộc chọn `Khám và điều trị mới` hoặc `Đang điều trị`, mặc định là `Khám và điều trị mới`.
 - [x] Validate số điện thoại khách theo chuẩn số di động Việt Nam 10 chữ số, không lưu dạng `+84`, có khoảng trắng hoặc dấu gạch.
 - [x] Ngày khám chọn theo phạm vi `booking_advance_days` admin cấu hình.
 - [x] Giờ khám là dropdown 30 phút.
+- [x] Hiển thị lưu ý bệnh nhân đến trước lịch hẹn 10 phút dưới phần giờ khám.
 - [x] Tra cứu lịch bằng số điện thoại.
 - [x] Sửa lịch bằng số điện thoại; chỉ lịch `Đã đặt` còn ở tương lai mới cho sửa/hủy trên UI khách.
 - [x] Khi sửa lịch, ngày mới/giờ mới tải slot khả dụng giống form đặt lịch.
@@ -81,7 +82,7 @@
 - [x] Tab `Thông tin trang chủ`.
 - [x] Tab `User maintain`.
 - [x] Admin đổi trạng thái trực tiếp bằng dropdown trong bảng.
-- [x] Cấu hình ngày nghỉ nội bộ trong tháng hiện tại.
+- [x] Cấu hình ngày nghỉ nội bộ theo 2 khối tháng hiện tại và tháng tới.
 - [x] Cấu hình nội dung trang chủ.
 - [x] Admin cấu hình tên phòng khám, logo, địa chỉ, link Google Maps, hotline, link Facebook là thông tin chung; nhãn nhỏ, tiêu đề chính, mô tả là nội dung riêng từng ảnh và được phép bỏ trống.
 - [x] Địa chỉ trang chủ bấm mở Google Maps khi có `homepage_content.addressMapUrl`.

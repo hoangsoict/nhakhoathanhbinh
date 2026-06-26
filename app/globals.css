@@ -167,7 +167,7 @@ button:disabled {
 }
 
 .brand,
-.headerInfo div,
+.headerInfoItem,
 .primaryAction {
   display: inline-flex;
   align-items: center;
@@ -244,18 +244,20 @@ button:disabled {
   font-weight: 700;
 }
 
-.headerInfo div {
+.headerInfoItem {
   max-width: min(360px, 32vw);
+  min-height: 36px;
+  padding: 4px 0;
   justify-content: flex-end;
   text-align: right;
 }
 
-.headerInfo a {
+.headerInfo a.headerInfoItem {
   color: inherit;
   text-decoration: none;
 }
 
-.headerInfo a:hover {
+.headerInfo a.headerInfoItem:hover {
   color: var(--accent-strong);
   text-decoration: underline;
 }
@@ -423,6 +425,21 @@ select option:disabled,
 
 textarea {
   resize: vertical;
+}
+
+.appointmentTimeNote {
+  align-self: end;
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  color: var(--warn);
+  background: #fff8e8;
+  border: 1px solid #efd6a2;
+  border-radius: 8px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .wide {
@@ -643,6 +660,27 @@ textarea {
   font-size: 1.05rem;
 }
 
+.holidayMonthGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.holidayMonthBlock {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.holidayMonthBlock h3 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.98rem;
+}
+
 .holidayGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
@@ -853,10 +891,18 @@ tr:last-child td {
     justify-items: start;
   }
 
-  .headerInfo div {
+  .headerInfoItem {
     max-width: none;
+    min-height: 44px;
+    padding: 8px 10px;
     justify-content: flex-start;
     text-align: left;
+  }
+
+  .headerInfo a.headerInfoItem {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fbff;
   }
 
   .heroContent {
@@ -1029,6 +1075,10 @@ tr:last-child td {
   .userPasswordReset {
     grid-template-columns: 1fr;
     min-width: 0;
+  }
+
+  .holidayMonthGroups {
+    grid-template-columns: 1fr;
   }
 
   .holidayGrid {

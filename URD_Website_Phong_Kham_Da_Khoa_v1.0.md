@@ -10,8 +10,9 @@
 - Đặt lịch nhanh bằng họ tên, tuổi, số điện thoại, ngày khám, giờ khám và mục đích khám.
 - Tra cứu lịch hẹn bằng số điện thoại.
 - Sửa lịch hẹn bằng số điện thoại nếu lịch ở trạng thái Đã đặt và còn đủ điều kiện thời gian.
-- Hủy lịch hẹn bằng số điện thoại nếu thời điểm hủy cách giờ khám lớn hơn 02 giờ.
 - Mỗi số điện thoại chỉ được có 01 lịch Đã đặt trong cùng ngày khám.
-- Admin quản lý lịch đặt, lịch sử đặt/sửa/hủy/không đến và cấu hình ngày/giờ làm việc theo số điện thoại.
+- Admin quản lý lịch đặt, lịch sử đặt/sửa/hủy/không đến và cấu hình ngày/giờ làm việc theo số điện thoại, qua
+
+
 
 > Bản đầy đủ đã được xuất ra file DOCX.
