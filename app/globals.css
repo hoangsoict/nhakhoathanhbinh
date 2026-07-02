@@ -158,6 +158,25 @@ button:disabled {
   font-weight: 700;
 }
 
+.topLoadingBanner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--soft);
+  color: var(--accent-strong);
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--line);
+}
+
+.topLoadingBanner.error {
+  background: #fff0ed;
+  color: var(--danger);
+  border-bottom-color: #fecdca;
+}
+
 .heroOverlay {
   min-height: 78vh;
   position: relative;
@@ -683,25 +702,61 @@ textarea {
 
 .holidayGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
 }
 
 .holidayItem {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  display: grid;
+  gap: 10px;
+  align-items: start;
   min-height: 40px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
 }
 
-.holidayItem input {
+.holidayFullDay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: auto;
+  font-weight: 700;
+}
+
+.holidayFullDay input {
   width: 16px;
   min-height: 16px;
   padding: 0;
+}
+
+.holidayTimeOff {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.holidayTimeOff label {
+  min-height: auto;
+}
+
+.holidayTimeOff span {
+  font-size: 0.78rem;
+}
+
+.holidayTimeOff select {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.holidayTimeOff button {
+  grid-column: 1 / -1;
+  min-height: 38px;
+}
+
+.holidayAddTimeOff {
+  min-height: 38px;
 }
 
 .homepageConfig {
@@ -1082,7 +1137,7 @@ tr:last-child td {
   }
 
   .holidayGrid {
-    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 

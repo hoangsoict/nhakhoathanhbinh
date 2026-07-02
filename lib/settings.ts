@@ -5,6 +5,7 @@ import {
   defaultBookingAdvanceDays,
   validateBookingAdvanceDays,
   validateInternalHolidays,
+  validateInternalTimeOffs,
   validateHomepageContent,
   validateSlotCapacity,
   validateWeeklySchedule,
@@ -18,7 +19,7 @@ export async function getClinicSettings() {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from("clinic_settings")
-    .select("weekly_schedule, internal_holidays, homepage_content, slot_capacity, booking_advance_days")
+    .select("weekly_schedule, internal_holidays, internal_time_offs, homepage_content, slot_capacity, booking_advance_days")
     .eq("id", SETTINGS_ID)
     .maybeSingle();
 
@@ -27,6 +28,7 @@ export async function getClinicSettings() {
       return {
         weeklySchedule: defaultWeeklySchedule,
         internalHolidays: [],
+        internalTimeOffs: [],
         homepageContent: defaultHomepageContent,
         slotCapacity: defaultSlotCapacity,
         bookingAdvanceDays: defaultBookingAdvanceDays
@@ -35,6 +37,7 @@ export async function getClinicSettings() {
 
     if (
       error.message.includes("internal_holidays") ||
+      error.message.includes("internal_time_offs") ||
       error.message.includes("homepage_content") ||
       error.message.includes("slot_capacity") ||
       error.message.includes("booking_advance_days")
@@ -54,6 +57,7 @@ export async function getClinicSettings() {
           ? validateWeeklySchedule(legacyData.weekly_schedule)
           : defaultWeeklySchedule,
         internalHolidays: validateInternalHolidays(legacyData?.internal_holidays),
+        internalTimeOffs: [],
         homepageContent: validateHomepageContent(legacyData?.homepage_content),
         slotCapacity: validateSlotCapacity(legacyData?.slot_capacity),
         bookingAdvanceDays: defaultBookingAdvanceDays
@@ -68,6 +72,7 @@ export async function getClinicSettings() {
       ? validateWeeklySchedule(data.weekly_schedule)
       : defaultWeeklySchedule,
     internalHolidays: validateInternalHolidays(data?.internal_holidays),
+    internalTimeOffs: validateInternalTimeOffs(data?.internal_time_offs),
     homepageContent: validateHomepageContent(data?.homepage_content),
     slotCapacity: validateSlotCapacity(data?.slot_capacity),
     bookingAdvanceDays: validateBookingAdvanceDays(data?.booking_advance_days)
@@ -83,6 +88,7 @@ export async function saveClinicSettings(settings: ClinicSettings) {
         id: SETTINGS_ID,
         weekly_schedule: settings.weeklySchedule,
         internal_holidays: settings.internalHolidays,
+        internal_time_offs: settings.internalTimeOffs,
         homepage_content: settings.homepageContent,
         slot_capacity: settings.slotCapacity,
         booking_advance_days: settings.bookingAdvanceDays,
@@ -90,12 +96,13 @@ export async function saveClinicSettings(settings: ClinicSettings) {
       },
       { onConflict: "id" }
     )
-    .select("weekly_schedule, internal_holidays, homepage_content, slot_capacity, booking_advance_days")
+    .select("weekly_schedule, internal_holidays, internal_time_offs, homepage_content, slot_capacity, booking_advance_days")
     .single();
 
   if (error) {
     if (
       error.message.includes("internal_holidays") ||
+      error.message.includes("internal_time_offs") ||
       error.message.includes("homepage_content") ||
       error.message.includes("slot_capacity") ||
       error.message.includes("booking_advance_days")
@@ -109,6 +116,7 @@ export async function saveClinicSettings(settings: ClinicSettings) {
   return {
     weeklySchedule: validateWeeklySchedule(data.weekly_schedule),
     internalHolidays: validateInternalHolidays(data.internal_holidays),
+    internalTimeOffs: validateInternalTimeOffs(data.internal_time_offs),
     homepageContent: validateHomepageContent(data.homepage_content),
     slotCapacity: validateSlotCapacity(data.slot_capacity),
     bookingAdvanceDays: validateBookingAdvanceDays(data.booking_advance_days)

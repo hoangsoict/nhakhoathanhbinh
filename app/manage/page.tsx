@@ -18,6 +18,7 @@ import {
   type AppointmentStatus,
   type HomepageContent,
   type HomepageSlide,
+  type InternalTimeOff,
   type WeeklySchedule
 } from "@/lib/appointments";
 
@@ -50,6 +51,7 @@ export default function ManagePage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>(defaultWeeklySchedule);
   const [internalHolidays, setInternalHolidays] = useState<string[]>([]);
+  const [internalTimeOffs, setInternalTimeOffs] = useState<InternalTimeOff[]>([]);
   const [homepageContent, setHomepageContent] = useState<HomepageContent>(defaultHomepageContent);
   const [slotCapacity, setSlotCapacity] = useState(defaultSlotCapacity);
   const [bookingAdvanceDays, setBookingAdvanceDays] = useState(defaultBookingAdvanceDays);
@@ -180,6 +182,7 @@ export default function ManagePage() {
 
     setWeeklySchedule(result.weeklySchedule);
     setInternalHolidays(result.internalHolidays ?? []);
+    setInternalTimeOffs(result.internalTimeOffs ?? []);
     setHomepageContent(result.homepageContent ?? defaultHomepageContent);
     setSlotCapacity(result.slotCapacity ?? defaultSlotCapacity);
     setBookingAdvanceDays(result.bookingAdvanceDays ?? defaultBookingAdvanceDays);
@@ -193,11 +196,16 @@ export default function ManagePage() {
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSettingsState({ type: "idle", message: "" });
+
+    if (!validateInternalTimeOffDraft()) {
+      return;
+    }
+
     setActionLoadingMessage("Đang lưu cấu hình...");
     const response = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent, slotCapacity, bookingAdvanceDays })
+      body: JSON.stringify({ weeklySchedule, internalHolidays, internalTimeOffs, homepageContent, slotCapacity, bookingAdvanceDays })
     });
     const result = await readJsonResponse(response);
 
@@ -209,6 +217,7 @@ export default function ManagePage() {
 
     setWeeklySchedule(result.weeklySchedule);
     setInternalHolidays(result.internalHolidays ?? []);
+    setInternalTimeOffs(result.internalTimeOffs ?? []);
     setHomepageContent(result.homepageContent ?? homepageContent);
     setSlotCapacity(result.slotCapacity ?? slotCapacity);
     setBookingAdvanceDays(result.bookingAdvanceDays ?? bookingAdvanceDays);
@@ -230,8 +239,65 @@ export default function ManagePage() {
         return current.filter((holiday) => holiday !== date);
       }
 
+      setInternalTimeOffs((timeOffs) => timeOffs.filter((timeOff) => timeOff.date !== date));
       return [...current, date].sort();
     });
+  }
+
+  function setInternalTimeOff(date: string, index: number, field: "start" | "end", value: string) {
+    setInternalTimeOffs((current) => {
+      const others = current.filter((timeOff) => timeOff.date !== date);
+      const dayTimeOffs = current.filter((timeOff) => timeOff.date === date);
+
+      if (dayTimeOffs[index]) {
+        dayTimeOffs[index] = { ...dayTimeOffs[index], [field]: value };
+      }
+
+      return [...others, ...dayTimeOffs].sort((first, second) => {
+        const dateCompare = first.date.localeCompare(second.date);
+        if (dateCompare !== 0) return dateCompare;
+        return first.start.localeCompare(second.start);
+      });
+    });
+  }
+
+  function addInternalTimeOff(date: string) {
+    setInternalTimeOffs((current) => {
+      return [...current, { date, start: "11:30", end: "13:30" }].sort((first, second) => {
+        const dateCompare = first.date.localeCompare(second.date);
+        if (dateCompare !== 0) return dateCompare;
+        return first.start.localeCompare(second.start);
+      });
+    });
+  }
+
+  function removeInternalTimeOff(date: string, index: number) {
+    setInternalTimeOffs((current) => {
+      const others = current.filter((timeOff) => timeOff.date !== date);
+      const dayTimeOffs = current.filter((timeOff) => timeOff.date === date);
+
+      const nextDayTimeOffs = dayTimeOffs.filter((_, i) => i !== index);
+
+      return [...others, ...nextDayTimeOffs].sort((first, second) => {
+        const dateCompare = first.date.localeCompare(second.date);
+        if (dateCompare !== 0) return dateCompare;
+        return first.start.localeCompare(second.start);
+      });
+    });
+  }
+
+  function validateInternalTimeOffDraft() {
+    const invalidTimeOff = internalTimeOffs.find((timeOff) => timeOff.start >= timeOff.end);
+
+    if (invalidTimeOff) {
+      setSettingsState({
+        type: "error",
+        message: `Khoảng nghỉ ngày ${formatShortDate(invalidTimeOff.date)} phải có giờ bắt đầu trước giờ kết thúc`
+      });
+      return false;
+    }
+
+    return true;
   }
 
   function updateHomepageContent<K extends keyof HomepageContent>(field: K, value: HomepageContent[K]) {
@@ -374,6 +440,10 @@ export default function ManagePage() {
   }
 
   async function persistHomepageSlides(slides: HomepageSlide[], silent = false) {
+    if (!validateInternalTimeOffDraft()) {
+      return;
+    }
+
     const nextSlides = slides.length ? slides : defaultHomepageContent.heroSlides;
     const nextImageUrls = nextSlides.map((slide) => slide.imageUrl);
     const nextHomepageContent = {
@@ -386,7 +456,7 @@ export default function ManagePage() {
     const response = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ weeklySchedule, internalHolidays, homepageContent: nextHomepageContent, slotCapacity, bookingAdvanceDays })
+      body: JSON.stringify({ weeklySchedule, internalHolidays, internalTimeOffs, homepageContent: nextHomepageContent, slotCapacity, bookingAdvanceDays })
     });
     const result = await readJsonResponse(response);
 
@@ -681,16 +751,47 @@ export default function ManagePage() {
                     <section className="holidayMonthBlock" key={monthGroup.label}>
                       <h3>{monthGroup.label}</h3>
                       <div className="holidayGrid">
-                        {monthGroup.dates.map((date) => (
-                          <label className="holidayItem" key={date}>
-                            <input
-                              type="checkbox"
-                              checked={internalHolidays.includes(date)}
-                              onChange={() => toggleInternalHoliday(date)}
-                            />
-                            <span>{formatShortDate(date)}</span>
-                          </label>
-                        ))}
+                        {monthGroup.dates.map((date) => {
+                          const isFullDayHoliday = internalHolidays.includes(date);
+                          const dayTimeOffs = internalTimeOffs.filter((item) => item.date === date);
+
+                          return (
+                            <div className="holidayItem" key={date}>
+                              <label className="holidayFullDay">
+                                <input
+                                  type="checkbox"
+                                  checked={isFullDayHoliday}
+                                  onChange={() => toggleInternalHoliday(date)}
+                                />
+                                <span>{formatShortDate(date)}</span>
+                              </label>
+                              {!isFullDayHoliday && dayTimeOffs.map((timeOff, index) => (
+                                <div className="holidayTimeOff" key={`${date}-${index}`}>
+                                  <TimeSelect24
+                                    label="Nghỉ từ"
+                                    name={`time-off-start-${date}-${index}`}
+                                    value={timeOff.start}
+                                    onChange={(value) => setInternalTimeOff(date, index, "start", value)}
+                                  />
+                                  <TimeSelect24
+                                    label="Đến"
+                                    name={`time-off-end-${date}-${index}`}
+                                    value={timeOff.end}
+                                    onChange={(value) => setInternalTimeOff(date, index, "end", value)}
+                                  />
+                                  <button className="secondaryAction" type="button" onClick={() => removeInternalTimeOff(date, index)}>
+                                    Xóa khoảng
+                                  </button>
+                                </div>
+                              ))}
+                              {!isFullDayHoliday && (
+                                <button className="secondaryAction holidayAddTimeOff" type="button" onClick={() => addInternalTimeOff(date)}>
+                                  Thêm giờ nghỉ
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </section>
                   ))}

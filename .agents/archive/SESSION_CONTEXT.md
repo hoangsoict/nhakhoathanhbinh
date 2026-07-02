@@ -47,8 +47,8 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - `app/api/admin/settings/route.ts`: API Admin cấu hình lịch làm việc, ngày nghỉ, trang chủ.
 - `app/api/settings/homepage/route.ts`: API public đọc thông tin trang chủ.
 - `lib/appointments.ts`: type/status/helper nghiệp vụ, default homepage content, validate settings.
-- `lib/settings.ts`: đọc/lưu `weekly_schedule`, `internal_holidays`, `homepage_content`.
-- `supabase/schema.sql`: thêm/cập nhật `clinic_settings`, `internal_holidays`, `homepage_content`.
+- `lib/settings.ts`: đọc/lưu `weekly_schedule`, `internal_holidays`, `internal_time_offs`, `homepage_content`.
+- `supabase/schema.sql`: thêm/cập nhật `clinic_settings`, `internal_holidays`, `internal_time_offs`, `homepage_content`.
 - `docs/SESSION_CONTEXT.md` và `docs/TODO.md`: tạo lại vì user đã xóa docs cũ.
 
 ## Chức Năng Đã Hoàn Thành
@@ -86,6 +86,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Admin cấu hình lịch làm việc theo ngày trong tuần.
 - Giờ đóng cửa trong cấu hình lịch làm việc được hiểu là giờ bắt đầu ca cuối cùng được đặt; ví dụ 08:00-15:00 có slot 15:00.
 - Admin cấu hình ngày nghỉ nội bộ theo 2 khối tháng hiện tại và tháng tới.
+- Admin cấu hình khoảng thời gian nghỉ nội bộ theo từng ngày cụ thể trong 2 tháng hiện tại và tháng tới; nghỉ cả ngày vẫn dùng `internal_holidays`, nghỉ theo giờ dùng `internal_time_offs`.
 - Admin cấu hình slider ảnh trang chủ bằng upload nhiều ảnh trong tab `Thông tin trang chủ`; file ảnh lưu ở Supabase Storage bucket public `clinic-assets`, từng slide lưu trong `homepage_content.heroSlides`, còn `heroImageUrls`/`heroImageUrl` giữ để tương thích dữ liệu cũ.
 - Tên phòng khám, logo, địa chỉ, link Google Maps, hotline, link Facebook là thông tin chung của trang chủ; nhãn nhỏ, tiêu đề chính và mô tả là nội dung riêng theo từng ảnh slide và có thể bỏ trống.
 - Trang chủ dùng logo ở header nếu Admin đã upload; nếu chưa có logo thì dùng icon mặc định.
@@ -96,6 +97,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Trang chủ chờ tải config admin trước khi render, không hiển thị trước nội dung mặc định cũ.
 - API chặn đặt/sửa ngoài lịch làm việc.
 - API chặn đặt/sửa vào ngày nghỉ nội bộ.
+- API chặn đặt/sửa vào khoảng nghỉ nội bộ theo ngày cụ thể.
 - Tab đặt lịch bắt buộc chọn ngày trước rồi mới tải các giờ khám phù hợp với lịch làm việc/ngày nghỉ.
 - Dropdown giờ khám chỉ hiện các slot chưa qua của ngày đã chọn và hiển thị số khách đã đặt dạng `x/4 khách`.
 - Khi khách sửa lịch, phần ngày mới/giờ mới cũng tải slot theo ngày đã chọn giống màn hình đặt lịch.
@@ -122,7 +124,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Chưa có test tự động.
 - Chưa có rate limit cho API công khai.
 - Chưa có phân quyền riêng Admin/Lễ tân.
-- Cần chạy lại `supabase/schema.sql` trên Supabase production để chắc chắn có các cột mới `internal_holidays`, `homepage_content`.
+- Cần chạy lại `supabase/schema.sql` trên Supabase production để chắc chắn có các cột mới `internal_holidays`, `internal_time_offs`, `homepage_content`.
 
 ## Lỗi Đã Gặp Và Cách Xử Lý
 
@@ -149,7 +151,7 @@ Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách 
 - Không đưa key nhạy cảm vào `NEXT_PUBLIC_*`.
 - `appointment_history` lưu snapshot để audit.
 - `created_at` của `appointments` là thời điểm đặt lịch thực tế, dùng để ưu tiên thứ tự khách trong cùng giờ khám.
-- `clinic_settings` lưu cấu hình: `weekly_schedule`, `internal_holidays`, `homepage_content`, `slot_capacity`, `booking_advance_days`.
+- `clinic_settings` lưu cấu hình: `weekly_schedule`, `internal_holidays`, `internal_time_offs`, `homepage_content`, `slot_capacity`, `booking_advance_days`.
 - `staff_users` lưu user `maintain` với password hash PBKDF2, bật/tắt bằng `active`.
 - `homepage_content` có `heroSlides` để lưu ảnh và nội dung từng slide từ Supabase Storage; `heroImageUrls`/`heroImageUrl` vẫn được set để tương thích dữ liệu cũ.
 - `supabase/schema.sql` được viết để có thể chạy lại nhiều lần bằng `if not exists`/`add column if not exists`.
@@ -170,7 +172,7 @@ Không ghi giá trị thật vào tài liệu hoặc git.
 
 ## Việc Tiếp Theo Sau Khi Mở Lại Session
 
-1. Chạy lại `supabase/schema.sql` trên Supabase để cập nhật `slot_capacity` và `staff_users`.
+1. Chạy lại `supabase/schema.sql` trên Supabase để cập nhật `slot_capacity`, `staff_users` và `internal_time_offs`.
 2. Kiểm tra Vercel đã có đủ env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`.
 3. Redeploy Vercel sau khi cập nhật schema/env.
 4. Thiết kế transaction/constraint database để khóa chắc giới hạn 04 khách/slot khi nhiều request đồng thời.

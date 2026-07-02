@@ -8,6 +8,7 @@
 - [x] Bật RLS và deny public policies.
 - [x] Unique index: mỗi số điện thoại tối đa 1 lịch `booked` trong cùng ngày khám.
 - [x] Thêm `internal_holidays` vào `clinic_settings`.
+- [x] Thêm `internal_time_offs` vào `clinic_settings`.
 - [x] Thêm `homepage_content` vào `clinic_settings`.
 - [x] Thêm `slot_capacity` vào `clinic_settings`.
 - [x] Thêm `booking_advance_days` vào `clinic_settings`.
@@ -30,6 +31,7 @@
 - [x] API Admin sắp xếp lịch theo ngày khám, giờ khám, thời điểm đặt lịch tăng dần.
 - [x] API Admin đọc/lưu cấu hình lịch làm việc.
 - [x] API Admin đọc/lưu ngày nghỉ nội bộ.
+- [x] API Admin đọc/lưu khoảng nghỉ nội bộ theo ngày cụ thể.
 - [x] API Admin đọc/lưu thông tin trang chủ.
 - [x] API đăng nhập nội bộ user/pass.
 - [x] API Admin quản lý user `maintain`.
@@ -88,6 +90,7 @@
 - [x] Địa chỉ trang chủ bấm mở Google Maps khi có `homepage_content.addressMapUrl`.
 - [x] Trang chủ hiển thị logo và link Facebook từ config admin thay cho phần giờ làm việc.
 - [x] Admin thêm/xóa ảnh slider trang chủ; xóa ảnh sẽ xóa object tương ứng trên Supabase Storage nếu ảnh nằm trong bucket `clinic-assets`.
+- [x] Admin cấu hình nghỉ cả ngày hoặc khoảng thời gian nghỉ theo từng ngày cụ thể trong 2 tháng hiện tại và tháng tới.
 - [x] Admin chỉ sửa trực tiếp trạng thái từng lịch trong bảng danh sách.
 - [x] Danh sách Admin giữ dạng bảng, mỗi lịch là một dòng.
 - [x] Danh sách Admin gom các lịch cùng mốc khám vào một cụm.
@@ -116,6 +119,7 @@
 - [x] Lịch đã đến giờ hoặc đã qua không cho khách cập nhật hoặc hủy.
 - [x] Chặn đặt/sửa ngoài lịch làm việc.
 - [x] Chặn đặt/sửa vào ngày nghỉ nội bộ.
+- [x] Chặn đặt/sửa vào khoảng nghỉ nội bộ theo ngày cụ thể.
 - [x] Mỗi ca tối đa theo cấu hình admin ở API đặt/sửa.
 - [x] Lịch `Đã hủy` không chiếm slot khi tính sức chứa.
 - [ ] Lịch `Đã đặt`, `Đã đến`, `Hoàn thành` chiếm slot.
@@ -166,6 +170,6 @@
 - [ ] Kiểm tra `git status`.
 - [ ] Chạy `npm run lint`.
 - [ ] Chạy `npm run build`.
-- [ ] Chạy lại `supabase/schema.sql` trên Supabase nếu chưa chạy sau khi thêm `slot_capacity` và `staff_users`.
+- [ ] Chạy lại `supabase/schema.sql` trên Supabase nếu chưa chạy sau khi thêm `slot_capacity`, `staff_users` và `internal_time_offs`.
 - [x] Implement rule giới hạn khách/slot theo cấu hình ở API đặt/sửa.
 - [ ] Thêm trạng thái `arrived`/`Đã đến`.

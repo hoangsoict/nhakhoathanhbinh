@@ -4,6 +4,7 @@ import {
   getScheduleForDate,
   isAppointmentInFuture,
   isInternalHoliday,
+  isWithinInternalTimeOff,
   isWithinAllowedAppointmentDates,
   isWithinBreakTime,
   occupyingAppointmentStatuses,
@@ -59,7 +60,11 @@ export async function GET(request: NextRequest) {
 
     const workingTimeOptions = createTimeOptions(workingDay.open, workingDay.close, 30);
     const timeOptions = workingTimeOptions.filter((time) => {
-      return isAppointmentInFuture(date, time) && !isWithinBreakTime(workingDay, time);
+      return (
+        isAppointmentInFuture(date, time) &&
+        !isWithinBreakTime(workingDay, time) &&
+        !isWithinInternalTimeOff(settings.internalTimeOffs, date, time)
+      );
     });
 
     if (!timeOptions.length) {

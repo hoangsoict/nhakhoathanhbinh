@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   appointmentPurposeLabels,
   defaultBookingAdvanceDays,
+  defaultHomepageContent,
   getAllowedAppointmentDates,
   appointmentStartsAt,
   type Appointment,
@@ -45,27 +46,41 @@ export default function Home() {
   const [lookupState, setLookupState] = useState<ApiState>({ type: "idle", message: "" });
   const [lookupPhone, setLookupPhone] = useState("");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null);
+  const [homepageContent, setHomepageContent] = useState<HomepageContent>(defaultHomepageContent);
   const [bookingAdvanceDays, setBookingAdvanceDays] = useState(defaultBookingAdvanceDays);
   const [activeHeroImageIndex, setActiveHeroImageIndex] = useState(0);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [actionLoadingMessage, setActionLoadingMessage] = useState("");
   const [successPopupMessage, setSuccessPopupMessage] = useState("");
 
   const heroImageUrls = useMemo(() => {
-    if (!homepageContent) return [];
     return homepageContent.heroSlides.length ? homepageContent.heroSlides.map((slide) => slide.imageUrl) : [homepageContent.heroImageUrl];
   }, [homepageContent]);
-  const activeHeroSlide = homepageContent?.heroSlides[activeHeroImageIndex];
+  const activeHeroSlide = homepageContent.heroSlides[activeHeroImageIndex];
   const maxAppointmentDate = useMemo(() => getAllowedAppointmentDates(bookingAdvanceDays).maxDate, [bookingAdvanceDays]);
 
   useEffect(() => {
     async function loadHomepageContent() {
-      const response = await fetch("/api/settings/homepage");
-      const result = await readJsonResponse(response);
+      try {
+        const response = await fetch("/api/settings/homepage");
+        const result = await readJsonResponse(response);
 
-      if (response.ok && result.homepageContent) {
-        setHomepageContent(result.homepageContent);
-        setBookingAdvanceDays(result.bookingAdvanceDays ?? defaultBookingAdvanceDays);
+        if (response.ok && result.homepageContent && !result.warning) {
+          setHomepageContent(result.homepageContent);
+          setBookingAdvanceDays(result.bookingAdvanceDays ?? defaultBookingAdvanceDays);
+          setLoadError(false);
+        } else {
+          setHomepageContent(defaultHomepageContent);
+          setBookingAdvanceDays(defaultBookingAdvanceDays);
+          setLoadError(true);
+        }
+      } catch {
+        setHomepageContent(defaultHomepageContent);
+        setBookingAdvanceDays(defaultBookingAdvanceDays);
+        setLoadError(true);
+      } finally {
+        setIsPageLoading(false);
       }
     }
 
@@ -261,16 +276,17 @@ export default function Home() {
     }, 0);
   }
 
-  if (!homepageContent) {
-    return (
-      <main className="loadingPage">
-        <p>Đang tải thông tin phòng khám...</p>
-      </main>
-    );
-  }
-
   return (
     <main>
+      {isPageLoading ? (
+        <div className="topLoadingBanner">
+          Đang tải dữ liệu phòng khám...
+        </div>
+      ) : loadError ? (
+        <div className="topLoadingBanner error">
+          Không thể tải dữ liệu mới nhất từ máy chủ. Đang hiển thị dữ liệu mặc định.
+        </div>
+      ) : null}
       {actionLoadingMessage && <BlockingOverlay message={actionLoadingMessage} />}
       {successPopupMessage && <SuccessPopup message={successPopupMessage} onClose={() => setSuccessPopupMessage("")} />}
       <nav className="siteHeader">

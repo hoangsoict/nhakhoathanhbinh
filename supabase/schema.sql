@@ -42,26 +42,27 @@ create table if not exists public.clinic_settings (
     "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"}
   }'::jsonb,
   internal_holidays jsonb not null default '[]'::jsonb,
+  internal_time_offs jsonb not null default '[]'::jsonb,
   slot_capacity integer not null default 4 check (slot_capacity > 0 and slot_capacity <= 20),
   booking_advance_days integer not null default 2 check (booking_advance_days > 0 and booking_advance_days <= 60),
   homepage_content jsonb not null default '{
-    "brandName": "Thanh Bình Clinic",
+    "brandName": "Nha Khoa Thanh Bình",
     "logoUrl": "",
-    "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "address": "52 Đại An, Phường Hà Đông, Hà Nội",
     "addressMapUrl": "",
-    "hotline": "028 1234 5678",
+    "hotline": "0899966683 - 0985203333",
     "facebookUrl": "",
     "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
-    "eyebrow": "Phòng khám đa khoa",
+    "eyebrow": "NHA KHOA THANH BÌNH",
     "headline": "Đặt lịch khám bằng số điện thoại",
-    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
+    "description": "Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn",
     "heroImageUrl": "/clinic-hero.png",
     "heroImageUrls": ["/clinic-hero.png"],
     "heroSlides": [{
       "imageUrl": "/clinic-hero.png",
-      "eyebrow": "Phòng khám đa khoa",
+      "eyebrow": "NHA KHOA THANH BÌNH",
       "headline": "Đặt lịch khám bằng số điện thoại",
-      "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+      "description": "Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn"
     }]
   }'::jsonb,
   updated_at timestamptz not null default now()
@@ -71,24 +72,27 @@ alter table public.clinic_settings
   add column if not exists internal_holidays jsonb not null default '[]'::jsonb;
 
 alter table public.clinic_settings
+  add column if not exists internal_time_offs jsonb not null default '[]'::jsonb;
+
+alter table public.clinic_settings
   add column if not exists homepage_content jsonb not null default '{
-    "brandName": "Thanh Bình Clinic",
+    "brandName": "Nha Khoa Thanh Bình",
     "logoUrl": "",
-    "address": "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "address": "52 Đại An, Phường Hà Đông, Hà Nội",
     "addressMapUrl": "",
-    "hotline": "028 1234 5678",
+    "hotline": "0899966683 - 0985203333",
     "facebookUrl": "",
     "hoursText": "Thứ 2 - Chủ nhật, 07:30 - 20:00",
-    "eyebrow": "Phòng khám đa khoa",
+    "eyebrow": "NHA KHOA THANH BÌNH",
     "headline": "Đặt lịch khám bằng số điện thoại",
-    "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
+    "description": "Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn",
     "heroImageUrl": "/clinic-hero.png",
     "heroImageUrls": ["/clinic-hero.png"],
     "heroSlides": [{
       "imageUrl": "/clinic-hero.png",
-      "eyebrow": "Phòng khám đa khoa",
+      "eyebrow": "NHA KHOA THANH BÌNH",
       "headline": "Đặt lịch khám bằng số điện thoại",
-      "description": "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+      "description": "Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn"
     }]
   }'::jsonb;
 

@@ -3,6 +3,7 @@ import {
   isAppointmentInFuture,
   isInternalHoliday,
   isThirtyMinuteSlot,
+  isWithinInternalTimeOff,
   isWithinAllowedAppointmentDates,
   isWithinWorkingSchedule,
   customerDailyBlockingStatuses,
@@ -146,6 +147,10 @@ export async function POST(request: NextRequest) {
       return jsonError("Ngày khám là ngày nghỉ nội bộ của phòng khám", 409);
     }
 
+    if (isWithinInternalTimeOff(settings.internalTimeOffs, appointmentDate, appointmentTime)) {
+      return jsonError("Giờ khám nằm trong khoảng thời gian nghỉ nội bộ của phòng khám", 409);
+    }
+
     if (!isWithinWorkingSchedule(settings.weeklySchedule, appointmentDate, appointmentTime)) {
       return jsonError("Giờ khám nằm ngoài lịch làm việc của phòng khám", 409);
     }
@@ -235,6 +240,10 @@ export async function PATCH(request: NextRequest) {
 
     if (isInternalHoliday(settings.internalHolidays, appointmentDate)) {
       return jsonError("Ngày khám là ngày nghỉ nội bộ của phòng khám", 409);
+    }
+
+    if (isWithinInternalTimeOff(settings.internalTimeOffs, appointmentDate, appointmentTime)) {
+      return jsonError("Giờ khám nằm trong khoảng thời gian nghỉ nội bộ của phòng khám", 409);
     }
 
     if (!isWithinWorkingSchedule(settings.weeklySchedule, appointmentDate, appointmentTime)) {

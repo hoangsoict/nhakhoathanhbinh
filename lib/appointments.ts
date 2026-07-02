@@ -21,6 +21,11 @@ export type WorkingDay = {
 };
 
 export type WeeklySchedule = Record<string, WorkingDay>;
+export type InternalTimeOff = {
+  date: string;
+  start: string;
+  end: string;
+};
 export type AppointmentPurpose = "new_treatment" | "ongoing_treatment";
 export type HomepageSlide = {
   imageUrl: string;
@@ -48,6 +53,7 @@ export type HomepageContent = {
 export type ClinicSettings = {
   weeklySchedule: WeeklySchedule;
   internalHolidays: string[];
+  internalTimeOffs: InternalTimeOff[];
   homepageContent: HomepageContent;
   slotCapacity: number;
   bookingAdvanceDays: number;
@@ -75,24 +81,24 @@ export const defaultWeeklySchedule: WeeklySchedule = {
 };
 
 export const defaultHomepageContent: HomepageContent = {
-  brandName: "Thanh Bình Clinic",
+  brandName: "Nha Khoa Thanh Bình",
   logoUrl: "",
-  address: "123 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+  address: "52 Đại An, Phường Hà Đông, Hà Nội",
   addressMapUrl: "",
-  hotline: "028 1234 5678",
+  hotline: "0899966683 - 0985203333",
   facebookUrl: "",
   hoursText: "Thứ 2 - Chủ nhật, 07:30 - 20:00",
-  eyebrow: "Phòng khám đa khoa",
+  eyebrow: "NHA KHOA THANH BÌNH",
   headline: "Đặt lịch khám bằng số điện thoại",
-  description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn.",
+  description: "Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn",
   heroImageUrl: "/clinic-hero.png",
   heroImageUrls: ["/clinic-hero.png"],
   heroSlides: [
     {
       imageUrl: "/clinic-hero.png",
-      eyebrow: "Phòng khám đa khoa",
+      eyebrow: "NHA KHOA THANH BÌNH",
       headline: "Đặt lịch khám bằng số điện thoại",
-      description: "Khách hàng đặt, tra cứu, sửa hoặc hủy lịch hẹn mà không cần tạo tài khoản hay mã lịch hẹn."
+      description: "Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn"
     }
   ]
 };
@@ -177,6 +183,61 @@ export function validateInternalHolidays(value: unknown) {
 
 export function isInternalHoliday(internalHolidays: string[], date: string) {
   return internalHolidays.includes(date);
+}
+
+export function validateInternalTimeOffs(value: unknown): InternalTimeOff[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const visibleHolidayDates = new Set(getHolidayMonthGroups().flatMap((group) => group.dates));
+  const validTimeOffs: InternalTimeOff[] = [];
+  const seen = new Set<string>();
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const raw = item as Record<string, unknown>;
+    const date = typeof raw.date === "string" ? raw.date : "";
+    const start = typeof raw.start === "string" ? raw.start : "";
+    const end = typeof raw.end === "string" ? raw.end : "";
+
+    if (!visibleHolidayDates.has(date) || !isValidDayBoundaryTime(start) || !isValidDayBoundaryTime(end)) {
+      continue;
+    }
+
+    if (start >= end) {
+      continue;
+    }
+
+    const key = `${date}_${start}_${end}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      validTimeOffs.push({ date, start, end });
+    }
+  }
+
+  return validTimeOffs.sort((first, second) => {
+    const dateCompare = first.date.localeCompare(second.date);
+    if (dateCompare !== 0) return dateCompare;
+    return first.start.localeCompare(second.start);
+  });
+}
+
+export function getInternalTimeOffsForDate(internalTimeOffs: InternalTimeOff[], date: string) {
+  return internalTimeOffs.filter((timeOff) => timeOff.date === date);
+}
+
+export function isWithinInternalTimeOff(internalTimeOffs: InternalTimeOff[], date: string, time: string) {
+  const dayTimeOffs = getInternalTimeOffsForDate(internalTimeOffs, date);
+  if (dayTimeOffs.length === 0) {
+    return false;
+  }
+
+  const appointmentTime = normalizeTime(time);
+  return dayTimeOffs.some((timeOff) => appointmentTime >= timeOff.start && appointmentTime < timeOff.end);
 }
 
 export function validateHomepageContent(value: unknown): HomepageContent {
@@ -367,6 +428,15 @@ export function validateWeeklySchedule(value: unknown): WeeklySchedule {
       return [day, { enabled, open, close, breakStart, breakEnd }];
     })
   );
+}
+
+function isValidDayBoundaryTime(value: string) {
+  if (!/^\d{2}:\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [hour, minute] = value.split(":").map(Number);
+  return Number.isInteger(hour) && Number.isInteger(minute) && hour >= 0 && hour <= 24 && minute >= 0 && minute <= 59 && (hour < 24 || minute === 0);
 }
 
 export function getScheduleForDate(schedule: WeeklySchedule, date: string) {

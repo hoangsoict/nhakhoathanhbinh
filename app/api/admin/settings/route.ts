@@ -3,6 +3,7 @@ import {
   validateBookingAdvanceDays,
   validateHomepageContent,
   validateInternalHolidays,
+  validateInternalTimeOffs,
   validateSlotCapacity,
   validateWeeklySchedule
 } from "@/lib/appointments";
@@ -32,11 +33,12 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const weeklySchedule = validateWeeklySchedule(body.weeklySchedule);
     const internalHolidays = validateInternalHolidays(body.internalHolidays);
+    const internalTimeOffs = validateInternalTimeOffs(body.internalTimeOffs);
     const homepageContent = validateHomepageContent(body.homepageContent);
     const slotCapacity = validateSlotCapacity(body.slotCapacity);
     const bookingAdvanceDays = validateBookingAdvanceDays(body.bookingAdvanceDays);
     return NextResponse.json(
-      await saveClinicSettings({ weeklySchedule, internalHolidays, homepageContent, slotCapacity, bookingAdvanceDays })
+      await saveClinicSettings({ weeklySchedule, internalHolidays, internalTimeOffs, homepageContent, slotCapacity, bookingAdvanceDays })
     );
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
