@@ -35,18 +35,10 @@ PORT=3000 npm run dev:start
 Cập nhật `.env.local` bằng thông tin Supabase:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=...
-SUPABASE_SERVICE_ROLE_KEY=...
-DATABASE_URL=...
-ADMIN_PIN=...
-```
-
-Nếu Supabase hiển thị bộ key mới, có thể dùng thêm:
-
-```bash
 SUPABASE_URL=...
 SUPABASE_PUBLISHABLE_KEY=...
 SUPABASE_SECRET_KEY=...
+SUPABASE_JWKS_URL=...
 ADMIN_PIN=...
 ```
 
@@ -55,11 +47,11 @@ ADMIN_PIN=...
 1. Tạo project Supabase.
 2. Mở SQL Editor.
 3. Chạy nội dung trong `supabase/schema.sql`.
-4. Copy Project URL, service role key hoặc secret key, và database connection string.
+4. Copy Project URL, publishable key, secret key, và JWKS URL.
 
 Nếu database đã được tạo từ phiên bản trước, chạy lại `supabase/schema.sql` để bổ sung bảng cấu hình ngày/giờ làm việc. Script dùng `if not exists` nên có thể chạy lại.
 
-Ứng dụng chỉ gọi Supabase từ server route bằng service role key hoặc secret key. Không đưa service role key/secret key vào biến `NEXT_PUBLIC_*`.
+Ứng dụng hiện gọi Supabase từ server route bằng `SUPABASE_SECRET_KEY`. Không đưa secret key vào client.
 
 ## Deploy Vercel
 
@@ -71,11 +63,10 @@ git add .
 git commit -m "Initial Next.js clinic booking app"
 gh repo create nhakhoathanhbinh --private --source=. --remote=origin --push
 vercel link
-vercel env add NEXT_PUBLIC_SUPABASE_URL production
-vercel env add SUPABASE_SERVICE_ROLE_KEY production
 vercel env add SUPABASE_URL production
+vercel env add SUPABASE_PUBLISHABLE_KEY production
 vercel env add SUPABASE_SECRET_KEY production
-vercel env add DATABASE_URL production
+vercel env add SUPABASE_JWKS_URL production
 vercel env add ADMIN_PIN production
 vercel deploy --prod
 ```

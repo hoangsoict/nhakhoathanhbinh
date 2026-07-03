@@ -1,21 +1,21 @@
 # Git Rules
 
-## Trước Khi Sửa
+## Before Edits
 
-- Luôn chạy `git status`.
-- Nhận diện thay đổi có sẵn của người khác/user.
-- Không revert thay đổi không phải của mình nếu chưa được yêu cầu.
+- Always run `git status`.
+- Identify existing user/other changes.
+- Do not revert changes you did not make unless requested.
 
-## Khi Làm Việc
+## During Work
 
-- Không force push.
-- Không `git reset --hard` nếu user chưa yêu cầu rõ.
-- Không dùng lệnh destructive để xóa file nếu chưa được xác nhận.
-- Không commit `.env.local`, `.next`, `.tools`, `node_modules` hoặc secret.
-- Không push git trừ khi user yêu cầu.
+- Do not force push.
+- Do not run `git reset --hard` unless explicitly requested.
+- Do not use destructive delete commands unless confirmed.
+- Do not commit `.env.local`, `.next`, `.tools`, `node_modules`, or secrets.
+- Do not push git unless requested.
 
-## Khi Commit Nếu Được Yêu Cầu
+## Commit When Requested
 
-- Chỉ stage file thuộc phạm vi task.
-- Kiểm tra `git diff --cached` trước commit.
-- Message commit phải mô tả đúng thay đổi.
+- Stage only files in task scope.
+- Review `git diff --cached` before commit.
+- Use an accurate commit message.

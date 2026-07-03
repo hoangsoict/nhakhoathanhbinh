@@ -35,10 +35,10 @@ export function verifyPassword(password: string, storedHash: string) {
 }
 
 function getTokenSecret() {
-  const secret = process.env.ADMIN_SESSION_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+  const secret = process.env.SUPABASE_SECRET_KEY;
 
   if (!secret) {
-    throw new Error("Missing ADMIN_SESSION_SECRET or Supabase service secret");
+    throw new Error("Missing SUPABASE_SECRET_KEY");
   }
 
   return secret;
@@ -106,8 +106,8 @@ export function requireStaff(request: NextRequest, roles: StaffRole[]) {
 }
 
 export async function authenticateStaff(username: string, password: string) {
-  const adminUsername = process.env.ADMIN_USERNAME ?? process.env.ADMIN_USER ?? "admin";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PIN;
+  const adminUsername = "admin";
+  const adminPassword = process.env.ADMIN_PIN;
 
   if (adminPassword && username === adminUsername && password === adminPassword) {
     return { username, role: "admin" as const };

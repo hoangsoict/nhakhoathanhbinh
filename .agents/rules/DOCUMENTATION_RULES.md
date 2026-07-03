@@ -1,24 +1,22 @@
 # Documentation Rules
 
-## Sau Mỗi Task
+## After Each Task
 
-Cập nhật memory phù hợp:
+- Update `.agents/memory/SESSION_STATE.md`.
+- Update `.agents/memory/CHANGELOG_AI.md`.
+- Update `.agents/memory/DECISIONS.md` when decisions change.
+- Update `.agents/memory/OPEN_QUESTIONS.md` when questions remain.
 
-- `.agents/memory/SESSION_STATE.md`
-- `.agents/memory/CHANGELOG_AI.md`
-- `.agents/memory/DECISIONS.md` nếu có quyết định mới
-- `.agents/memory/OPEN_QUESTIONS.md` nếu còn điểm chưa rõ
+## Writing Rules
 
-## Cách Ghi
+- Do not record guesses as facts.
+- Label status clearly: `Done`, `Pending`, `Blocked`.
+- Mark proposals as proposals.
+- Put confirmed decisions in `DECISIONS.md`.
+- Do not keep rejected business rules as source of truth.
 
-- Không ghi suy đoán thành sự thật.
-- Phân biệt rõ `Done`, `Pending`, `Blocked`.
-- Nếu chỉ là đề xuất, ghi là đề xuất.
-- Nếu user xác nhận quyết định, ghi vào `DECISIONS.md`.
-- Nếu business rule đã bị xác nhận là nhầm, không đưa vào source of truth.
+## Storage
 
-## Lưu Trữ
-
-- Không xóa vĩnh viễn markdown cũ khi chuẩn hóa context.
-- File markdown cũ không còn dùng nên chuyển vào `.agents/archive/`.
-- URD/design/operations cho người đọc nên đặt trong `docs/`.
+- Do not permanently delete old markdown during context cleanup.
+- Move unused old markdown to `.agents/archive/`.
+- Keep Vietnamese reader-facing URD/design/operations docs in `docs/`.

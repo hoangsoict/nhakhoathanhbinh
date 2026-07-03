@@ -1,9 +1,9 @@
 # Workflow: Before Change
 
-1. Chạy `git status`.
-2. Đọc file liên quan đến task.
-3. Kiểm tra thay đổi có sẵn trong file sẽ sửa.
-4. Xác định rule/skill cần áp dụng.
-5. Nếu task có thể đổi business rule, xác nhận user trước.
-6. Nếu task liên quan schema, chuẩn bị cập nhật `supabase/schema.sql`.
-7. Nếu task liên quan secret/env, kiểm tra `.agents/rules/SECURITY_RULES.md`.
+1. Run `git status`.
+2. Read files related to the task.
+3. Check existing changes in files to edit.
+4. Select relevant rules/skills.
+5. If task may change business rules, confirm with user first.
+6. If task touches schema, update `supabase/schema.sql`.
+7. If task touches secrets/env, read `.agents/rules/SECURITY_RULES.md`.

@@ -1,37 +1,105 @@
 # AI Changelog
 
-## 2026-07-02 - Cấu hình nhiều khoảng nghỉ (time-off) trong cùng một ngày cho Admin
+## 2026-07-03 - Document Dev Server Runbook
 
-### Sửa
+### Changed
+
+- Updated `docs/OPERATIONS/README.md` with:
+  - Required env vars.
+  - Background dev server commands.
+  - Default URL `http://localhost:3002`.
+  - Direct dev command.
+  - Codex local Node PATH command.
+  - Sandbox `listen EPERM` note.
+- Updated session memory.
+
+### Validation
+
+- Dev server started successfully at `http://localhost:3002`.
+
+## 2026-07-03 - Standardize Deployment Environment Variables
+
+### Changed
+
+- Replaced canonical env vars with:
+  - `SUPABASE_URL`
+  - `SUPABASE_PUBLISHABLE_KEY`
+  - `SUPABASE_SECRET_KEY`
+  - `SUPABASE_JWKS_URL`
+  - `ADMIN_PIN`
+- `lib/supabase.ts` now reads `SUPABASE_URL` and `SUPABASE_SECRET_KEY` only.
+- `lib/admin-auth.ts` now uses:
+  - `SUPABASE_SECRET_KEY` for staff token signing.
+  - username `admin` plus `ADMIN_PIN` for root admin login.
+- Updated `.env.example`, `README.md`, and live `.agents` context.
+
+### Notes
+
+- Removed live-code fallback to the previous env naming scheme.
+- `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are configured for Supabase's current key set; current code does not directly consume them yet.
+
+## 2026-07-03 - Normalize AI Context Language
+
+### Changed
+
+- Converted AI instruction/context markdown to concise English:
+  - `AGENTS.md`
+  - `agents.md`
+  - `.agents/PROJECT_INDEX.md`
+  - `.agents/ARCHITECTURE.md`
+  - `.agents/TAKEOVER.md`
+  - `.agents/rules/*.md`
+  - `.agents/skills/*/SKILL.md`
+  - `.agents/workflows/*.md`
+  - `.agents/memory/SESSION_STATE.md`
+  - `.agents/memory/DECISIONS.md`
+  - `.agents/memory/CHANGELOG_AI.md`
+  - `.agents/memory/OPEN_QUESTIONS.md`
+- Kept Vietnamese reader-facing docs unchanged:
+  - `docs/URD/*`
+  - `docs/DESIGN/*`
+  - `docs/OPERATIONS/*`
+
+### Notes
+
+- No source-code behavior changed.
+- No business rules changed.
+
+## 2026-07-02 - Multiple Same-Day Internal Time-Offs
+
+### Changed
 
 - `lib/appointments.ts`:
-  - Cập nhật hàm `validateInternalTimeOffs` để loại bỏ việc lọc trùng theo `date`. Thay vào đó, nó sẽ kiểm tra và giữ lại tất cả các khoảng nghỉ hợp lệ (khác nhau về thời gian `{ date, start, end }`) trên cùng một ngày. Lọc trùng hoàn chỉnh dựa trên key tổng hợp `${date}_${start}_${end}`.
-  - Thay thế `getInternalTimeOffForDate` thành `getInternalTimeOffsForDate` trả về một mảng chứa toàn bộ các khoảng nghỉ của ngày đó.
-  - Cập nhật logic `isWithinInternalTimeOff` để kiểm tra xem thời gian hẹn có nằm trong **bất kỳ** khoảng nghỉ nào của ngày đó hay không (bằng cách dùng `.some()`).
+  - `validateInternalTimeOffs` now keeps multiple valid `{ date, start, end }` entries on the same day.
+  - Duplicate filtering uses composite key `${date}_${start}_${end}`.
+  - Replaced `getInternalTimeOffForDate` with `getInternalTimeOffsForDate`.
+  - `isWithinInternalTimeOff` checks any same-day time-off with `.some()`.
 - `app/manage/page.tsx`:
-  - Cập nhật state-handler `setInternalTimeOff` và `removeInternalTimeOff` (thay cho `clearInternalTimeOff` cũ) để thao tác chỉnh sửa hoặc xóa khoảng nghỉ dựa trên index trong ngày.
-  - Cập nhật hàm `addInternalTimeOff` để cho phép click thêm mới nhiều khoảng giờ nghỉ mặc định cho cùng một ngày mà không bị giới hạn 1 khoảng như trước.
-  - Chỉnh sửa UI hiển thị: Lặp qua toàn bộ danh sách khoảng nghỉ của ngày cụ thể và hiển thị form sửa / xóa cho từng khoảng, nút "Thêm giờ nghỉ" luôn hiển thị dưới cùng của cột ngày để có thể thêm nhiều khoảng.
+  - Added index-based edit/remove handlers for same-day time-offs.
+  - `addInternalTimeOff` supports multiple default time-offs for one day.
+  - UI renders all time-off rows for a day and keeps add action at the bottom.
 
-## 2026-07-02 - Thêm trạng thái tải dữ liệu trang chủ và xử lý lỗi loading (Không block màn hình)
+## 2026-07-02 - Homepage Loading State
 
-### Sửa
+### Changed
 
 - `app/page.tsx`:
-  - Thêm state `isPageLoading` (mặc định là `true`) và `loadError` (mặc định là `false`).
-  - Cập nhật hàm `loadHomepageContent` trong `useEffect` sử dụng `try-catch-finally` để tắt trạng thái tải dữ liệu khi hoàn tất API fetch. Nếu API trả về thất bại (hoặc có warning), đặt `loadError` thành `true`.
-  - Hiển thị dải banner thông báo nhỏ `.topLoadingBanner` ("Đang tải dữ liệu phòng khám...") ở đầu `main` khi đang tải. Nếu xảy ra lỗi kết nối hoặc load dữ liệu thất bại, banner không biến mất mà chuyển sang trạng thái cảnh báo màu đỏ (`.topLoadingBanner.error`): "Không thể tải dữ liệu mới nhất từ máy chủ. Đang hiển thị dữ liệu mặc định."
+  - Added `isPageLoading` and `loadError`.
+  - `loadHomepageContent` now uses `try/catch/finally`.
+  - Shows a sticky loading/error banner.
 - `app/globals.css`:
-  - Thêm CSS cho class `.topLoadingBanner` và `.topLoadingBanner.error` với màu sắc tương thích tông màu của website.
-  - Cấu hình lớp `.topLoadingBanner` với thuộc tính `position: sticky; top: 0; z-index: 100;` để banner luôn ghim nổi lên ở đầu trang kể cả khi cuộn xuống.
+  - Added `.topLoadingBanner` and `.topLoadingBanner.error`.
 - `app/api/settings/homepage/route.ts`:
-  - Loại bỏ block `Promise.race` giới hạn timeout 1.5s. Việc này đảm bảo API kiên nhẫn chờ kết nối và lấy dữ liệu chính xác từ database Supabase thay vì kết thúc sớm và trả về default fallback quá nhanh.
+  - Removed the 1.5s `Promise.race` timeout so Supabase data can load fully.
 
-## 2026-07-02 - Chuẩn hóa Markdown/Context
+## 2026-07-02 - Markdown/Context Structure
 
-Phạm vi: chỉ tạo/sửa/di chuyển markdown và thư mục `.agents`, `docs`. Không thay đổi source code chức năng.
+### Scope
 
-### Tạo Mới
+- Markdown and context only.
+- No functional source-code changes.
+
+### Added
 
 - `agents.md`
 - `.agents/PROJECT_INDEX.md`
@@ -55,34 +123,30 @@ Phạm vi: chỉ tạo/sửa/di chuyển markdown và thư mục `.agents`, `doc
 - `docs/DESIGN/README.md`
 - `docs/OPERATIONS/README.md`
 
-### Sửa
-
-- `AGENTS.md`: rút gọn thành entrypoint chính cho Codex và trỏ về `.agents/`.
-
-### Di Chuyển
+### Moved
 
 - `docs/SESSION_CONTEXT.md` -> `.agents/archive/SESSION_CONTEXT.md`
 - `docs/TODO.md` -> `.agents/archive/TODO.md`
 - `URD_Website_Phong_Kham_Da_Khoa_v1.0.md` -> `docs/URD/URD_Website_Phong_Kham_Da_Khoa_v1.0.md`
 
-### Nội Dung Chuẩn Hóa
+### Source Of Truth
 
-- Tách project index, architecture, takeover, rules, skills, workflows và memory.
-- Loại bỏ các business rule user xác nhận là nhầm.
-- Giữ source of truth theo logic hiện có: `booking_advance_days`, khách được sửa lịch hợp lệ, hủy/sửa bị chặn khi đã đến giờ hoặc đã qua, lịch làm việc admin cấu hình linh hoạt.
+- Split project index, architecture, takeover, rules, skills, workflows, memory.
+- Removed rejected business rules.
+- Kept current behavior: `booking_advance_days`, valid reschedule by phone, edit/cancel blocked at or after appointment time, flexible admin schedule.
 
-## 2026-07-02 - Cập Nhật Nội Dung Mặc Định Trang Chủ
+## 2026-07-02 - Default Homepage Content
 
-### Sửa
+### Changed
 
-- `lib/appointments.ts`: cập nhật `defaultHomepageContent`.
-- `supabase/schema.sql`: cập nhật default JSON `homepage_content`.
-- `.agents/memory/SESSION_STATE.md`: ghi nhận fallback mặc định mới.
+- `lib/appointments.ts`: updated `defaultHomepageContent`.
+- `supabase/schema.sql`: updated default `homepage_content` JSON.
+- `.agents/memory/SESSION_STATE.md`: recorded new fallback content.
 
-### Nội Dung
+### Content
 
-- Brand: `Nha Khoa Thanh Bình`.
-- Hotline: `0899966683 - 0985203333`.
-- Địa chỉ: `52 Đại An, Phường Hà Đông, Hà Nội`.
-- Eyebrow: `NHA KHOA THANH BÌNH`.
-- Description: `Khách hàng đặt, tra cứu lịch hẹn để sửa hoặc hủy lịch hẹn`.
+- Brand: `Nha Khoa Thanh Binh`
+- Hotline: `0899966683 - 0985203333`
+- Address: `52 Dai An, Phuong Ha Dong, Ha Noi`
+- Eyebrow: `NHA KHOA THANH BINH`
+- Description: customer can book, look up, edit, and cancel appointments.

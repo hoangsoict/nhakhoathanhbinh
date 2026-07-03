@@ -1,34 +1,31 @@
 # AGENTS.md
 
-Entrypoint chính cho Codex khi làm việc trong project `nhakhoathanhbinh`.
+Main Codex entrypoint for `nhakhoathanhbinh`.
 
-## Bắt Buộc Đọc Trước Khi Làm
+## Read First
 
 1. `.agents/PROJECT_INDEX.md`
 2. `.agents/ARCHITECTURE.md`
 3. `.agents/TAKEOVER.md`
 4. `.agents/memory/SESSION_STATE.md`
 5. `.agents/memory/DECISIONS.md`
-6. Rule và skill liên quan trong `.agents/rules/` và `.agents/skills/`
+6. Relevant rules and skills in `.agents/rules/` and `.agents/skills/`
 
-## Nguyên Tắc Cốt Lõi
+## Core Rules
 
-- Đây là website đặt lịch cho phòng khám/nha khoa Thanh Bình.
-- Khách hàng không tạo tài khoản, không đăng nhập, không dùng mã lịch hẹn.
-- Khách dùng số điện thoại để đặt, tra cứu, sửa và hủy lịch.
-- Khu vực nội bộ ở `/manage`, dùng user/pass và role `admin`/`maintain`.
-- Server route dùng Supabase service role key; không expose secret ra client.
-- Không đổi business rule nếu user không yêu cầu rõ.
-- Không push git trừ khi user yêu cầu.
-- Không commit `.env.local`, `.next`, `.tools`, `node_modules` hoặc secret thật.
+- Project: appointment website for Nha Khoa Thanh Binh.
+- Public users do not create accounts, log in, or use appointment codes.
+- Public users use phone numbers to book, look up, edit, and cancel appointments.
+- Internal area: `/manage`, user/password login, roles `admin` and `maintain`.
+- `SUPABASE_SECRET_KEY` is server-only.
+- Do not change business rules without explicit user request.
+- Do not push git unless requested.
+- Do not commit `.env.local`, `.next`, `.tools`, `node_modules`, or real secrets.
 
-## Sau Mỗi Task
+## After Each Task
 
-Cập nhật các file memory phù hợp:
-
-- `.agents/memory/SESSION_STATE.md`
-- `.agents/memory/CHANGELOG_AI.md`
-- `.agents/memory/DECISIONS.md` nếu có quyết định mới
-- `.agents/memory/OPEN_QUESTIONS.md` nếu còn điểm chưa rõ
-
-Nếu task có thay đổi schema, env, nghiệp vụ lớn hoặc hướng project, cập nhật context trước khi bàn giao.
+- Update `.agents/memory/SESSION_STATE.md`.
+- Update `.agents/memory/CHANGELOG_AI.md`.
+- Update `.agents/memory/DECISIONS.md` when decisions change.
+- Update `.agents/memory/OPEN_QUESTIONS.md` when questions remain.
+- Update context before handoff if schema, env, business rules, or project direction changed.

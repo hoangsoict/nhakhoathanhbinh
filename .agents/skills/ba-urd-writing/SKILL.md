@@ -1,32 +1,33 @@
 # Skill: BA URD Writing
 
-## Khi Dùng
+## Use When
 
-Dùng khi viết, review hoặc chuẩn hóa URD/tài liệu yêu cầu người dùng cho project.
+- Writing, reviewing, or normalizing URD/user requirement documents.
+- Target reader is Vietnamese business/user audience.
 
-## Cấu Trúc URD
+## URD Structure
 
-1. Mục tiêu
-2. Phạm vi
+1. Goals
+2. Scope
 3. Actor
-4. Luồng nghiệp vụ
-5. Yêu cầu chức năng
-6. Rule nghiệp vụ
-7. Ngoại lệ
-8. Phân quyền
-9. Dữ liệu
-10. Điểm cần làm rõ
+4. Business flows
+5. Functional requirements
+6. Business rules
+7. Exceptions
+8. Permissions
+9. Data
+10. Open questions
 
-## Nguyên Tắc
+## Rules
 
-- Phân biệt yêu cầu đã chốt, giả định và câu hỏi mở.
-- Không ghi rule nhầm thành source of truth.
-- Dùng thuật ngữ nhất quán: khách hàng, admin, maintain, lịch hẹn, ca khám, số điện thoại.
-- URD không chứa secret, token, password hoặc thông tin nhạy cảm thật.
-- Khi URD khác code hiện tại, ghi rõ là gap hoặc proposed change, không coi là đã implement.
+- Separate confirmed requirements, assumptions, and open questions.
+- Do not promote incorrect rules into source of truth.
+- Keep domain terms consistent in URD: customer, admin, maintain, appointment, slot, phone number.
+- URD must not contain real secrets, tokens, passwords, or sensitive data.
+- When URD differs from current code, mark it as gap or proposed change.
 
-## Vị Trí Tài Liệu
+## Document Locations
 
-- URD đặt trong `docs/URD/`.
-- Thiết kế đặt trong `docs/DESIGN/`.
-- Tài liệu vận hành/deploy đặt trong `docs/OPERATIONS/`.
+- URD: `docs/URD/`
+- Design: `docs/DESIGN/`
+- Operations/deployment: `docs/OPERATIONS/`

@@ -1,57 +1,69 @@
 # Session State
 
-## Trạng Thái Hiện Tại
+## Current State
 
-Project là website đặt lịch cho phòng khám/nha khoa Thanh Bình. Khách hàng thao tác công khai tại `/`; khu vực nội bộ ở `/manage`.
+- Project: appointment website for Nha Khoa Thanh Binh.
+- Public site: `/`.
+- Internal site: `/manage`.
+- Current task completed: environment variables standardized to the requested Supabase key set.
+- Env names standardized to `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL`, `ADMIN_PIN`.
+- Dev server runbook documented in `docs/OPERATIONS/README.md`.
+- Vietnamese reader-facing docs in `docs/URD/`, `docs/DESIGN/`, `docs/OPERATIONS/` remain Vietnamese.
+- Source code now reads only the standardized env names for Supabase/admin root login.
 
-Worktree trước khi chuẩn hóa context đang có nhiều file source code và schema modified chưa stage. Lần chuẩn hóa này chỉ chạm markdown và thư mục `.agents`/`docs`, không thay đổi source code chức năng.
+## Active Business Rules
 
-## Business Rule Đang Áp Dụng
+- Public users do not create accounts.
+- Public users do not log in.
+- Public users do not use appointment codes.
+- Public users book, look up, edit, and cancel by phone number.
+- Phone number is stored as a 10-digit local number, for example `0984009777`.
+- One phone number may have at most one same-day `booked` appointment.
+- If same-day status is `booked` or `no_show`, the phone cannot book again that day.
+- Appointment dates must be within admin-configured `booking_advance_days`.
+- Slot length: 30 minutes.
+- Slot capacity: `slot_capacity`, default `4`.
+- `cancelled` does not occupy capacity.
+- Current capacity statuses: `booked`, `completed`.
+- Pending status model: add `arrived` so `booked`, `arrived`, `completed` occupy capacity.
+- Public users can book/edit only future times.
+- Appointments at or past their time cannot be updated or cancelled by public users.
+- Admin configures weekly schedule.
+- Schedule `close` means the last bookable slot start time.
+- Admin configures internal holidays and multiple same-day internal time-offs.
+- Internal admin/staff create/edit is not limited by public date/time rules.
+- Write create/edit/cancel/status history to `appointment_history`.
 
-- Khách hàng không cần tạo tài khoản.
-- Khách hàng không cần đăng nhập.
-- Không dùng mã lịch hẹn cho khách hàng.
-- Khách dùng số điện thoại để đặt, tra cứu, sửa, hủy.
-- Số điện thoại lưu dạng nội địa chuẩn 10 chữ số, ví dụ `0984009777`.
-- Mỗi số điện thoại tối đa 01 lịch trạng thái `booked` trong cùng ngày khám.
-- Nếu số điện thoại đã có lịch `booked` hoặc `no_show` trong ngày khám thì không được đặt lại ngày đó.
-- Ngày khám cho chọn trong phạm vi `booking_advance_days` do admin cấu hình.
-- Mỗi ca khám dài 30 phút.
-- Mỗi ca tối đa theo cấu hình `slot_capacity`, mặc định 04 khách.
-- Lịch `cancelled` không chiếm slot.
-- Lịch `booked` và `completed` đang chiếm slot; cần thêm `arrived` để hoàn tất rule `Đã đến`.
-- Khách chỉ đặt/sửa sang giờ khám chưa qua.
-- Lịch đã đến giờ hoặc đã qua không cho khách cập nhật hoặc hủy.
-- Admin cấu hình lịch làm việc theo ngày trong tuần.
-- Trong cấu hình lịch làm việc, `close` là giờ bắt đầu ca cuối cùng được đặt.
-- Admin cấu hình ngày nghỉ nội bộ và nhiều khoảng nghỉ nội bộ trong cùng một ngày.
-- Admin tạo/sửa lịch nội bộ không phụ thuộc giới hạn ngày/giờ dành cho khách public.
-- Lưu lịch sử tạo/sửa/hủy/cập nhật trạng thái vào `appointment_history`.
+## Done
 
-## Chức Năng Đã Có
+- Homepage content loads from admin settings.
+- Default homepage fallback:
+  - Brand: `Nha Khoa Thanh Binh`
+  - Hotline: `0899966683 - 0985203333`
+  - Address: `52 Dai An, Phuong Ha Dong, Ha Noi`
+- Homepage slider uses public Supabase Storage bucket `clinic-assets`.
+- Public API supports booking, lookup, edit, cancel by phone number.
+- Public availability API returns daily slots without customer personal data.
+- Admin API manages appointment list and status updates.
+- Admin configures weekly schedule, holidays, time-offs, homepage, slot capacity, booking advance days.
+- Admin manages `maintain` users.
+- `maintain` can view appointments and update status.
+- `admin` has full `/manage` permissions.
+- Root admin login uses username `admin` and `ADMIN_PIN`.
+- Dev server can run at `http://localhost:3002`.
 
-- Trang chủ lấy nội dung từ cấu hình admin; fallback mặc định hiện dùng tên Nha Khoa Thanh Bình, hotline `0899966683 - 0985203333`, địa chỉ `52 Đại An, Phường Hà Đông, Hà Nội`.
-- Slider ảnh trang chủ lưu qua Supabase Storage bucket public `clinic-assets`.
-- API public đặt, tra cứu, sửa, hủy lịch bằng số điện thoại.
-- API public availability theo ngày, không trả thông tin cá nhân khách hàng.
-- API admin quản lý danh sách lịch và cập nhật trạng thái.
-- Admin cấu hình lịch làm việc, ngày nghỉ, nhiều khoảng nghỉ trong ngày, trang chủ, slot capacity, booking advance days.
-- Admin quản lý user `maintain`.
-- Role `maintain` chỉ xem danh sách đặt lịch và cập nhật trạng thái.
-- Role `admin` có quyền quản trị đầy đủ trong `/manage`.
+## Pending
 
-## Còn Dở
+- Add `arrived` status.
+- Add database transaction/constraint protection for slot-capacity race conditions.
+- Add UI for audit history.
+- Add OTP/phone verification if required.
+- Add public API rate limiting.
+- Add automated tests.
+- Run updated `supabase/schema.sql` on production Supabase if not already applied.
+- Rotate Supabase service/secret keys if any real key was exposed in chat.
 
-- Chưa có trạng thái `arrived`/`Đã đến`.
-- Giới hạn khách/slot đã enforce ở API nhưng chưa có transaction/constraint database chống race condition tuyệt đối.
-- Chưa có UI xem lịch sử thao tác.
-- Chưa có OTP/xác minh số điện thoại.
-- Chưa có rate limit cho API public.
-- Chưa có test tự động.
-- Cần chạy lại `supabase/schema.sql` trên Supabase production nếu chưa cập nhật schema mới.
-- Cần rotate Supabase service/secret key nếu key thật từng lộ trong chat.
+## Context Archive
 
-## Context Cũ
-
-- `docs/SESSION_CONTEXT.md` cũ đã được lưu tại `.agents/archive/SESSION_CONTEXT.md`.
-- `docs/TODO.md` cũ đã được lưu tại `.agents/archive/TODO.md`.
+- Old `docs/SESSION_CONTEXT.md`: `.agents/archive/SESSION_CONTEXT.md`
+- Old `docs/TODO.md`: `.agents/archive/TODO.md`

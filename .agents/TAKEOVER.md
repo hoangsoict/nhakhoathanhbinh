@@ -1,39 +1,39 @@
 # Takeover
 
-## Khi Mở Session Mới
+## New Session
 
-1. Đọc `AGENTS.md`.
-2. Đọc `.agents/PROJECT_INDEX.md`.
-3. Đọc `.agents/ARCHITECTURE.md`.
-4. Đọc `.agents/memory/SESSION_STATE.md`.
-5. Đọc `.agents/memory/DECISIONS.md`.
-6. Đọc `.agents/memory/OPEN_QUESTIONS.md`.
-7. Chọn rule/skill/workflow liên quan trước khi sửa.
+1. Read `AGENTS.md`.
+2. Read `.agents/PROJECT_INDEX.md`.
+3. Read `.agents/ARCHITECTURE.md`.
+4. Read `.agents/memory/SESSION_STATE.md`.
+5. Read `.agents/memory/DECISIONS.md`.
+6. Read `.agents/memory/OPEN_QUESTIONS.md`.
+7. Select relevant rule/skill/workflow before edits.
 
-## Lệnh Nên Chạy Trước Khi Sửa
+## Before Edits
 
 ```bash
 git status
 rg --files
 ```
 
-Nếu task liên quan markdown/context:
+For markdown/context tasks:
 
 ```bash
 find . -name "*.md" -type f | sort
 ```
 
-## Không Được Làm
+## Do Not
 
-- Không đổi source code ngoài phạm vi task.
-- Không đổi business rule nếu user không yêu cầu rõ.
-- Không ghi secret thật vào markdown, source code, `.env.example`, log hoặc câu trả lời.
-- Không reset hard, force push, xóa file hoặc revert thay đổi của người khác nếu chưa được yêu cầu.
-- Không push git nếu user chưa yêu cầu.
+- Do not change source code outside task scope.
+- Do not change business rules without explicit request.
+- Do not write real secrets into markdown, source, `.env.example`, logs, or replies.
+- Do not hard reset, force push, delete files, or revert others' changes unless requested.
+- Do not push git unless requested.
 
-## Khi Bàn Giao
+## Handoff
 
-- Nêu rõ file đã sửa/tạo/di chuyển.
-- Nêu lệnh kiểm tra đã chạy.
-- Nêu điểm chưa làm được hoặc rủi ro còn lại.
-- Cập nhật memory/changelog trước khi trả lời cuối.
+- List created/modified/moved files.
+- List validation commands.
+- List unfinished items or residual risks.
+- Update memory/changelog before final reply.

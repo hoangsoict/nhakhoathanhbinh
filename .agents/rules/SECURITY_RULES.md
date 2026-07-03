@@ -1,26 +1,26 @@
 # Security Rules
 
-## Secret
+## Secrets
 
-- Không ghi Supabase service role key, secret key, database password, GitHub token, cookie, admin password, admin PIN thật vào markdown/source/log.
-- Không commit `.env`, `.env.local` hoặc file chứa credential thật.
-- `.env.example` chỉ chứa tên biến và placeholder.
+- Do not write real Supabase privileged keys, secret keys, database passwords, GitHub tokens, cookies, admin passwords, or admin PINs into markdown/source/logs.
+- Do not commit `.env`, `.env.local`, or files with real credentials.
+- `.env.example` may contain variable names and placeholders only.
 
 ## Env
 
-- `NEXT_PUBLIC_*` chỉ dùng cho giá trị được phép public.
-- `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` là private.
-- Service role key chỉ dùng trong server route hoặc tooling server-side.
+- `SUPABASE_PUBLISHABLE_KEY` is public-safe.
+- `SUPABASE_SECRET_KEY` and `ADMIN_PIN` are private.
+- `SUPABASE_SECRET_KEY` is server-route or server-side tooling only.
 
 ## Auth / Role
 
-- Admin PIN/password không hard-code trong source.
-- Admin-only API phải kiểm tra session/token và role.
-- Role `maintain` không được có quyền cấu hình hệ thống hoặc quản lý user.
+- Do not hard-code admin PIN/password in source.
+- Admin-only APIs must check session/token and role.
+- Role `maintain` must not configure the system or manage users.
 
 ## Public API
 
-- Public API chỉ cho thao tác theo số điện thoại do khách nhập.
-- Không trả danh sách lịch của người khác.
-- Không trả dữ liệu cá nhân trong endpoint availability.
-- Cân nhắc rate limit/OTP khi task liên quan chống lạm dụng.
+- Public APIs operate only on the phone number entered by the customer.
+- Do not return other customers' appointments.
+- Do not expose personal data in availability endpoints.
+- Consider rate limit/OTP for anti-abuse tasks.

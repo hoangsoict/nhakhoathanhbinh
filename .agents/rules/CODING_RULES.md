@@ -1,26 +1,26 @@
 # Coding Rules
 
-## Nguyên Tắc Sửa Code
+## Code Changes
 
-- Sửa tối thiểu để đạt mục tiêu task.
-- Ưu tiên pattern hiện có trong repo.
-- Không refactor ngoài phạm vi.
-- Không đổi business rule nếu user không yêu cầu rõ.
-- Không thêm abstraction khi chưa có nhu cầu thực tế.
-- Giữ copy tiếng Việt hiện có trừ khi user yêu cầu thay đổi.
-- Với schema change, cập nhật `supabase/schema.sql` bằng SQL idempotent.
-- Với thay đổi API/frontend, chạy `npm run lint` và `npm run build` khi feasible.
+- Make the smallest change that completes the task.
+- Prefer existing repo patterns.
+- Do not refactor outside scope.
+- Do not change business rules without explicit request.
+- Do not add abstractions without real need.
+- Keep existing Vietnamese UI copy unless requested.
+- For schema changes, update `supabase/schema.sql` with idempotent SQL.
+- For API/frontend changes, run `npm run lint` and `npm run build` when feasible.
 
 ## Next.js/Supabase
 
-- Phân biệt rõ server route và client component.
-- Secret chỉ dùng server-side.
-- Validate input ở API route, không chỉ ở UI.
-- API public không trả dữ liệu cá nhân của người khác.
-- Admin-only operation phải đi qua server route có auth/role check.
+- Keep server routes and client components clearly separated.
+- Use secrets only server-side.
+- Validate input in API routes, not only UI.
+- Public APIs must not expose other customers' personal data.
+- Admin-only operations require server-side auth and role checks.
 
-## Kiểm Tra
+## Checks
 
-- Đọc file liên quan trước khi sửa.
-- Kiểm tra `git diff` các file mình chạm trước khi bàn giao.
-- Nếu không chạy được lint/build/test, ghi rõ lý do trong final.
+- Read related files before edits.
+- Review `git diff` for touched files before handoff.
+- If lint/build/test cannot run, state why in final.

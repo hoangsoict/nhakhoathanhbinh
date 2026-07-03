@@ -1,11 +1,11 @@
 # agents.md
 
-File tương thích cho các tool khác như Antigravity CLI.
+Compatibility entrypoint for tools such as Antigravity CLI.
 
-Không duplicate toàn bộ hướng dẫn. Hãy đọc:
+Do not duplicate full instructions here. Read:
 
 - `AGENTS.md`
 - `.agents/PROJECT_INDEX.md`
 - `.agents/`
 
-`AGENTS.md` là entrypoint chính và source of truth cho agent instructions.
+`AGENTS.md` is the main source of truth for agent instructions.

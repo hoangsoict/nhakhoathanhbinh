@@ -1,77 +1,80 @@
 # Architecture
 
-## Tổng Quan
+## Overview
 
-Ứng dụng là website đặt lịch phòng khám/nha khoa Thanh Bình chạy trên Next.js App Router. Frontend public phục vụ khách hàng tại `/`; frontend nội bộ phục vụ nhân sự tại `/manage`. Dữ liệu lưu trên Supabase Postgres; route handler server-side dùng service role key để truy cập database và storage.
+- Next.js App Router website for Nha Khoa Thanh Binh appointments.
+- Public customer UI at `/`.
+- Internal staff UI at `/manage`.
+- Data: Supabase Postgres.
+- Media: Supabase Storage bucket `clinic-assets`.
+- Server route handlers use `SUPABASE_SECRET_KEY`.
 
 ## Frontend Next.js
 
-- `app/page.tsx`: trang chủ, slider ảnh, thông tin phòng khám, form đặt lịch, tra cứu/sửa/hủy bằng số điện thoại.
-- `app/manage/page.tsx`: trang nội bộ đăng nhập user/pass, tab danh sách lịch, cấu hình lịch làm việc, thông tin trang chủ, user `maintain`.
-- `app/globals.css`: style chính cho public UI và manage UI.
+- `app/page.tsx`: homepage, image slider, clinic info, booking form, phone lookup/edit/cancel.
+- `app/manage/page.tsx`: staff login, appointments, schedule settings, homepage settings, `maintain` users.
+- `app/globals.css`: shared public and manage styles.
 
 ## API Route
 
-- `app/api/appointments/route.ts`: API public cho tạo, tra cứu, sửa, hủy lịch.
-- `app/api/appointments/availability/route.ts`: API public trả slot theo ngày và số khách đã đặt từng slot.
-- `app/api/admin/appointments/route.ts`: API nội bộ danh sách, tạo/sửa lịch nội bộ, cập nhật trạng thái.
-- `app/api/admin/settings/route.ts`: API nội bộ đọc/lưu cấu hình.
-- `app/api/admin/session/route.ts`: API đăng nhập nội bộ.
-- `app/api/admin/users/route.ts`: API admin quản lý user `maintain`.
-- `app/api/settings/homepage/route.ts`: API public đọc nội dung trang chủ.
+- `app/api/appointments/route.ts`: public create, lookup, edit, cancel.
+- `app/api/appointments/availability/route.ts`: public daily slots and counts.
+- `app/api/admin/appointments/route.ts`: internal list, create/edit, status updates.
+- `app/api/admin/settings/route.ts`: internal settings read/save.
+- `app/api/admin/session/route.ts`: internal login/session.
+- `app/api/admin/users/route.ts`: admin `maintain` user management.
+- `app/api/settings/homepage/route.ts`: public homepage content.
 
 ## Supabase Database
 
-Các bảng/cấu hình chính theo schema hiện có:
+| Table | Purpose |
+| --- | --- |
+| `appointments` | Customer info, appointment date/time, status, `created_at` |
+| `appointment_history` | Audit history for create/edit/cancel/status changes |
+| `clinic_settings` | `weekly_schedule`, `internal_holidays`, `internal_time_offs`, `homepage_content`, `slot_capacity`, `booking_advance_days` |
+| `staff_users` | Internal `maintain` users, password hash, active flag |
 
-- `appointments`: lịch hẹn, thông tin khách, ngày/giờ khám, trạng thái, `created_at`.
-- `appointment_history`: lịch sử tạo/sửa/hủy/cập nhật trạng thái.
-- `clinic_settings`: cấu hình `weekly_schedule`, `internal_holidays`, `internal_time_offs`, `homepage_content`, `slot_capacity`, `booking_advance_days`.
-- `staff_users`: user nội bộ role `maintain`, password hash, trạng thái active.
-
-RLS được bật với policy deny public; Next.js server route dùng service role key.
+- RLS is enabled with deny-public policies.
+- Next.js server routes use `SUPABASE_SECRET_KEY`.
 
 ## Supabase Storage
 
-- Bucket public: `clinic-assets`.
-- Dùng cho ảnh slider trang chủ và logo.
-- Danh sách slide lưu trong `homepage_content.heroSlides`.
-- `homepage_content.heroImageUrls` và `homepage_content.heroImageUrl` còn giữ để tương thích dữ liệu cũ.
+- Public bucket: `clinic-assets`.
+- Used for homepage slider images and logo.
+- Current slide list: `homepage_content.heroSlides`.
+- Legacy compatibility: `homepage_content.heroImageUrls`, `homepage_content.heroImageUrl`.
 
 ## Vercel Deployment
 
-Biến môi trường cần có:
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_JWKS_URL`
+- `ADMIN_PIN`
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `DATABASE_URL`
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
-- `ADMIN_SESSION_SECRET`
+- Do not expose `SUPABASE_SECRET_KEY` or real `ADMIN_PIN` to client code or markdown.
 
-Không đưa service role key hoặc password vào client hay markdown.
+## Public Booking Flow
 
-## Luồng Đặt Lịch
+1. Customer selects a date within `booking_advance_days`.
+2. UI loads availability by schedule, holidays, time-offs, and capacity.
+3. Customer enters name, phone, appointment date/time, reason.
+4. API validates phone, time, schedule, holidays/time-offs, and capacity.
+5. API blocks duplicate same-day phone bookings when status is `booked` or `no_show`.
+6. API creates appointment and writes `appointment_history`.
 
-1. Khách chọn ngày trong phạm vi `booking_advance_days`.
-2. UI gọi availability để lấy slot theo lịch làm việc, ngày nghỉ, khoảng nghỉ và sức chứa.
-3. Khách nhập họ tên, số điện thoại, ngày/giờ khám, mục đích khám.
-4. API validate số điện thoại, thời gian, lịch làm việc, ngày nghỉ/khoảng nghỉ, slot capacity.
-5. API chặn mỗi số điện thoại có quá một lịch `booked` trong cùng ngày khám; nếu có `booked` hoặc `no_show` trong ngày thì không cho đặt lại ngày đó.
-6. API tạo lịch và ghi `appointment_history`.
+## Public Lookup/Edit/Cancel Flow
 
-## Luồng Tra Cứu/Sửa/Hủy
+1. Customer looks up appointments by phone number.
+2. API returns only appointments for that phone number.
+3. UI allows edit/cancel only for future `booked` appointments.
+4. Appointments at or past their time cannot be changed by customers.
+5. Cancel sets status to `cancelled`; cancelled appointments do not occupy slots.
+6. Edit validates the new slot like a new booking.
 
-1. Khách tra cứu bằng số điện thoại.
-2. API chỉ trả lịch của số điện thoại được nhập.
-3. UI chỉ cho sửa/hủy các lịch `booked` còn ở tương lai.
-4. Lịch đã đến giờ hoặc đã qua không cho khách cập nhật hoặc hủy.
-5. Hủy chuyển trạng thái `cancelled`; lịch `cancelled` không chiếm slot.
-6. Sửa lịch phải validate slot mới giống luồng đặt lịch.
+## Admin Flow
 
-## Luồng Admin
-
-1. Nhân sự vào `/manage` và đăng nhập user/pass.
-2. Role `maintain` chỉ xem danh sách đặt lịch và cập nhật trạng thái.
-3. Role `admin` quản lý lịch, cấu hình lịch làm việc, thông tin trang chủ, slot capacity, booking advance days và user `maintain`.
-4. Admin API có thể tạo/sửa lịch nội bộ, không phụ thuộc giới hạn thời gian/ngày dành cho khách public.
+1. Staff enters `/manage` and logs in with user/password.
+2. `maintain`: view appointments and update status.
+3. `admin`: manage appointments, schedule, homepage, capacity, advance days, `maintain` users.
+4. Admin appointment create/edit is not limited by public date/time rules.

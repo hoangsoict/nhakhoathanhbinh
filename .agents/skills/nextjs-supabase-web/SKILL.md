@@ -1,29 +1,32 @@
 # Skill: Next.js Supabase Web
 
-## Khi Dùng
+## Use When
 
-Dùng cho task liên quan Next.js, Vercel, Supabase, API route, environment variables, database integration, storage hoặc deployment.
+- Next.js, Vercel, Supabase, API routes.
+- Environment variables.
+- Database integration.
+- Storage.
+- Deployment.
 
 ## Checklist
 
-- Xác định code chạy ở client component hay server route.
-- Kiểm tra env vars cần dùng:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `SUPABASE_SERVICE_ROLE_KEY`
-  - `DATABASE_URL`
-  - `ADMIN_USERNAME`
-  - `ADMIN_PASSWORD`
-  - `ADMIN_SESSION_SECRET`
-- Không đưa service role key vào client hoặc `NEXT_PUBLIC_*`.
-- Validate input ở API route.
-- Chuẩn hóa lỗi public sang tiếng Việt khi phù hợp.
-- Với Supabase query, kiểm tra error path và empty data path.
-- Với schema change, cập nhật `supabase/schema.sql` idempotent.
-- Với storage, kiểm tra bucket `clinic-assets` và URL public.
-- Đánh giá deployment impact trên Vercel.
-- Chạy `npm run lint` và `npm run build` khi feasible.
+- Identify client component vs server route execution.
+- Check required env vars:
+  - `SUPABASE_URL`
+  - `SUPABASE_PUBLISHABLE_KEY`
+  - `SUPABASE_SECRET_KEY`
+  - `SUPABASE_JWKS_URL`
+  - `ADMIN_PIN`
+- Do not expose `SUPABASE_SECRET_KEY` or real `ADMIN_PIN` to client code.
+- Validate input in API routes.
+- Keep public-facing errors in Vietnamese when appropriate.
+- For Supabase queries, handle error and empty-data paths.
+- For schema changes, update `supabase/schema.sql` idempotently.
+- For storage, check bucket `clinic-assets` and public URLs.
+- Check Vercel deployment impact.
+- Run `npm run lint` and `npm run build` when feasible.
 
-## File Hay Liên Quan
+## Common Files
 
 - `app/api/**/route.ts`
 - `lib/supabase.ts`

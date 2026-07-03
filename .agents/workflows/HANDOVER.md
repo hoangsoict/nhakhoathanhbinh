@@ -1,18 +1,18 @@
 # Workflow: Handover
 
-## Cuối Session
+## End Of Session
 
-1. Chạy `git status`.
-2. Tóm tắt thay đổi chính.
-3. Ghi việc đã xong vào `.agents/memory/SESSION_STATE.md`.
-4. Ghi thay đổi context/code vào `.agents/memory/CHANGELOG_AI.md`.
-5. Ghi quyết định mới vào `.agents/memory/DECISIONS.md`.
-6. Ghi việc còn thiếu hoặc cần hỏi vào `.agents/memory/OPEN_QUESTIONS.md`.
+1. Run `git status`.
+2. Summarize main changes.
+3. Record completed work in `.agents/memory/SESSION_STATE.md`.
+4. Record context/code changes in `.agents/memory/CHANGELOG_AI.md`.
+5. Record new decisions in `.agents/memory/DECISIONS.md`.
+6. Record pending questions in `.agents/memory/OPEN_QUESTIONS.md`.
 
-## Nội Dung Bàn Giao
+## Handoff Content
 
-- File đã tạo/sửa/di chuyển.
-- Lệnh kiểm tra đã chạy.
-- Lệnh chưa chạy được và lý do.
-- Rủi ro còn lại.
-- Bước tiếp theo đề xuất.
+- Created/modified/moved files.
+- Validation commands run.
+- Commands not run and why.
+- Residual risks.
+- Proposed next step.
