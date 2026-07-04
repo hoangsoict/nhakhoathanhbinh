@@ -33,13 +33,13 @@ create table if not exists public.appointment_history (
 create table if not exists public.clinic_settings (
   id text primary key default 'default',
   weekly_schedule jsonb not null default '{
-    "0": {"enabled": false, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "1": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "2": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "3": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "4": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "5": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"}
+    "0": {"enabled": false, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "1": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "2": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "3": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "4": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "5": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}}
   }'::jsonb,
   internal_holidays jsonb not null default '[]'::jsonb,
   internal_time_offs jsonb not null default '[]'::jsonb,
@@ -104,13 +104,13 @@ alter table public.clinic_settings
 
 alter table public.clinic_settings
   alter column weekly_schedule set default '{
-    "0": {"enabled": false, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "1": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "2": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "3": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "4": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "5": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"},
-    "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30"}
+    "0": {"enabled": false, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "1": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "2": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "3": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "4": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "5": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}},
+    "6": {"enabled": true, "open": "07:30", "close": "20:00", "breakStart": "11:30", "breakEnd": "13:30", "slotCapacities": {}}
   }'::jsonb;
 
 create table if not exists public.staff_users (

@@ -12,6 +12,8 @@
 - Do not require customers to cancel before rescheduling.
 - Do not apply same-day-only booking.
 - Use admin-configured `booking_advance_days`.
+- Use `slot_capacity` as the default customers-per-slot value.
+- Allow optional per-slot capacity overrides inside each weekly schedule day; missing overrides fall back to `slot_capacity`.
 - Do not apply a 2-hour-before-cancel rule.
 - Block public edit/cancel once appointment time has arrived or passed.
 - Weekly schedule is admin-configured; no fixed Mon-Fri/Sat schedule as source of truth.
@@ -35,6 +37,7 @@
 
 - `appointments.created_at` is the actual booking time and same-slot ordering key.
 - `appointment_history` stores audit snapshots.
-- `clinic_settings` stores schedule, holidays, homepage, slot capacity, and booking advance days.
+- `clinic_settings` stores schedule, per-slot capacity overrides, holidays, homepage, default slot capacity, and booking advance days.
+- `weekly_schedule[*].slotCapacities` stores optional 30-minute slot capacity overrides keyed by `HH:mm`.
 - `staff_users` stores `maintain` users with password hash and active flag.
 - Schema SQL must be idempotent with `if not exists` / `add column if not exists`.

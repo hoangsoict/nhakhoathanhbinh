@@ -18,6 +18,7 @@ export type WorkingDay = {
   close: string;
   breakStart: string;
   breakEnd: string;
+  slotCapacities?: Record<string, number>;
 };
 
 export type WeeklySchedule = Record<string, WorkingDay>;
@@ -71,13 +72,13 @@ export const appointmentPurposeLabels: Record<AppointmentPurpose, string> = {
 export const appointmentPurposeValues = Object.keys(appointmentPurposeLabels) as AppointmentPurpose[];
 
 export const defaultWeeklySchedule: WeeklySchedule = {
-  "0": { enabled: false, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
-  "1": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
-  "2": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
-  "3": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
-  "4": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
-  "5": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" },
-  "6": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30" }
+  "0": { enabled: false, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} },
+  "1": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} },
+  "2": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} },
+  "3": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} },
+  "4": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} },
+  "5": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} },
+  "6": { enabled: true, open: "07:30", close: "20:00", breakStart: "11:30", breakEnd: "13:30", slotCapacities: {} }
 };
 
 export const defaultHomepageContent: HomepageContent = {
@@ -276,6 +277,19 @@ export function validateSlotCapacity(value: unknown) {
   return parsed;
 }
 
+export function validateSlotCapacityOverride(value: unknown) {
+  if (value === "" || value === null || value === undefined) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
+    return null;
+  }
+
+  return parsed;
+}
+
 export function validateBookingAdvanceDays(value: unknown) {
   const parsed = Number(value);
 
@@ -425,9 +439,37 @@ export function validateWeeklySchedule(value: unknown): WeeklySchedule {
         throw new Error("Giờ bắt đầu nghỉ phải trước giờ kết thúc nghỉ");
       }
 
-      return [day, { enabled, open, close, breakStart, breakEnd }];
+      const slotCapacities = validateWorkingDaySlotCapacities(raw.slotCapacities, {
+        enabled,
+        open,
+        close,
+        breakStart,
+        breakEnd
+      });
+
+      return [day, { enabled, open, close, breakStart, breakEnd, slotCapacities }];
     })
   );
+}
+
+function validateWorkingDaySlotCapacities(value: unknown, workingDay: Omit<WorkingDay, "slotCapacities">) {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  const validSlots = new Set(getWorkingDayBookableTimes(workingDay));
+  const slotCapacities: Record<string, number> = {};
+
+  for (const [time, capacity] of Object.entries(value as Record<string, unknown>)) {
+    const normalizedTime = normalizeTime(time);
+    const validCapacity = validateSlotCapacityOverride(capacity);
+
+    if (validSlots.has(normalizedTime) && validCapacity !== null) {
+      slotCapacities[normalizedTime] = validCapacity;
+    }
+  }
+
+  return slotCapacities;
 }
 
 function isValidDayBoundaryTime(value: string) {
@@ -462,6 +504,21 @@ export function isWithinBreakTime(workingDay: WorkingDay, time: string) {
   return appointmentTime >= workingDay.breakStart && appointmentTime < workingDay.breakEnd;
 }
 
+export function getWorkingDayBookableTimes(workingDay: Pick<WorkingDay, "enabled" | "open" | "close" | "breakStart" | "breakEnd">) {
+  if (!workingDay.enabled) {
+    return [];
+  }
+
+  return createTimeOptions(workingDay.open, workingDay.close, 30).filter((time) => {
+    return !isWithinBreakTime(workingDay, time);
+  });
+}
+
+export function getSlotCapacityForTime(workingDay: WorkingDay, time: string, fallbackCapacity: number) {
+  const normalizedTime = normalizeTime(time);
+  return workingDay.slotCapacities?.[normalizedTime] ?? fallbackCapacity;
+}
+
 export function isThirtyMinuteSlot(time: string) {
   const normalizedTime = normalizeTime(time);
   const [hour, minute] = normalizedTime.split(":").map(Number);
@@ -488,13 +545,7 @@ export function createTimeOptions(open: string, close: string, stepMinutes: numb
 export function getAvailableTimeOptionsForDate(schedule: WeeklySchedule, date: string) {
   const workingDay = getScheduleForDate(schedule, date);
 
-  if (!workingDay.enabled) {
-    return [];
-  }
-
-  return createTimeOptions(workingDay.open, workingDay.close, 30).filter((time) => {
-    return isAppointmentInFuture(date, time) && !isWithinBreakTime(workingDay, time);
-  });
+  return getWorkingDayBookableTimes(workingDay).filter((time) => isAppointmentInFuture(date, time));
 }
 
 export function requireAppointmentPurpose(value: unknown) {

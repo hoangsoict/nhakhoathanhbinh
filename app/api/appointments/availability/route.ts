@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createTimeOptions,
+  getSlotCapacityForTime,
   getScheduleForDate,
   isAppointmentInFuture,
   isInternalHoliday,
@@ -99,12 +100,13 @@ export async function GET(request: NextRequest) {
 
     const slots = timeOptions.map((time) => {
       const bookedCount = counts.get(time) ?? 0;
+      const capacity = getSlotCapacityForTime(workingDay, time, settings.slotCapacity);
 
       return {
         time,
         bookedCount,
-        capacity: settings.slotCapacity,
-        available: bookedCount < settings.slotCapacity
+        capacity,
+        available: bookedCount < capacity
       };
     });
 

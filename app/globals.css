@@ -648,13 +648,46 @@ textarea {
 
 .scheduleRow {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) repeat(4, minmax(120px, 150px));
   gap: 12px;
-  align-items: end;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfdfc;
+}
+
+.scheduleControls {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) repeat(4, minmax(120px, 150px));
+  gap: 12px;
+  align-items: end;
+}
+
+.slotCapacityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.slotCapacityItem {
+  display: grid;
+  grid-template-columns: 1fr 52px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.slotCapacityItem span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.slotCapacityItem input {
+  min-height: 36px;
+  padding: 0 8px;
+  text-align: center;
 }
 
 .checkLabel {
@@ -984,7 +1017,7 @@ tr:last-child td {
   .adminFilters,
   .adminLogin,
   .homepageConfig,
-  .scheduleRow {
+  .scheduleControls {
     grid-template-columns: 1fr;
   }
 

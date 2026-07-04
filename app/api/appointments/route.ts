@@ -3,6 +3,8 @@ import {
   isAppointmentInFuture,
   isInternalHoliday,
   isThirtyMinuteSlot,
+  getScheduleForDate,
+  getSlotCapacityForTime,
   isWithinInternalTimeOff,
   isWithinAllowedAppointmentDates,
   isWithinWorkingSchedule,
@@ -160,10 +162,15 @@ export async function POST(request: NextRequest) {
       return jsonError("Số điện thoại này đã có lịch Đã đặt hoặc Không đến trong ngày khám", 409);
     }
 
+    const slotCapacity = getSlotCapacityForTime(
+      getScheduleForDate(settings.weeklySchedule, appointmentDate),
+      appointmentTime,
+      settings.slotCapacity
+    );
     const occupyingCount = await countOccupyingAppointments(appointmentDate, appointmentTime);
 
-    if (occupyingCount >= settings.slotCapacity) {
-      return jsonError(`Khung giờ này đã đủ ${settings.slotCapacity} khách, vui lòng chọn giờ khác`, 409);
+    if (occupyingCount >= slotCapacity) {
+      return jsonError(`Khung giờ này đã đủ ${slotCapacity} khách, vui lòng chọn giờ khác`, 409);
     }
 
     const payload = {
@@ -250,9 +257,14 @@ export async function PATCH(request: NextRequest) {
       return jsonError("Giờ khám nằm ngoài lịch làm việc của phòng khám", 409);
     }
 
+    const slotCapacity = getSlotCapacityForTime(
+      getScheduleForDate(settings.weeklySchedule, appointmentDate),
+      appointmentTime,
+      settings.slotCapacity
+    );
     const occupyingCount = await countOccupyingAppointments(appointmentDate, appointmentTime, appointmentId);
-    if (occupyingCount >= settings.slotCapacity) {
-      return jsonError(`Khung giờ này đã đủ ${settings.slotCapacity} khách, vui lòng chọn giờ khác`, 409);
+    if (occupyingCount >= slotCapacity) {
+      return jsonError(`Khung giờ này đã đủ ${slotCapacity} khách, vui lòng chọn giờ khác`, 409);
     }
 
     const { data, error } = await supabaseAdmin

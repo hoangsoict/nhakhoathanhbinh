@@ -14,6 +14,7 @@ import {
   defaultWeeklySchedule,
   getAllowedAppointmentDates,
   getHolidayMonthGroups,
+  getWorkingDayBookableTimes,
   type Appointment,
   type AppointmentStatus,
   type HomepageContent,
@@ -231,6 +232,33 @@ export default function ManagePage() {
       ...current,
       [day]: { ...current[day], [field]: value }
     }));
+  }
+
+  function updateSlotCapacityOverride(day: string, time: string, value: string) {
+    if (value && !/^\d+$/.test(value)) {
+      return;
+    }
+
+    setWeeklySchedule((current) => {
+      const currentDay = current[day];
+      const nextSlotCapacities = { ...(currentDay.slotCapacities ?? {}) };
+
+      if (!value) {
+        delete nextSlotCapacities[time];
+      } else {
+        const capacity = Number(value);
+        if (!Number.isInteger(capacity) || capacity < 1 || capacity > 20) {
+          return current;
+        }
+
+        nextSlotCapacities[time] = capacity;
+      }
+
+      return {
+        ...current,
+        [day]: { ...currentDay, slotCapacities: nextSlotCapacities }
+      };
+    });
   }
 
   function toggleInternalHoliday(date: string) {
@@ -682,7 +710,7 @@ export default function ManagePage() {
                 <strong>Cấu hình lịch làm việc</strong>
               </div>
               <Field
-                label="Số khách tối đa mỗi ca"
+                label="Số khách mặc định mỗi ca"
                 name="slotCapacity"
                 type="number"
                 min="1"
@@ -708,38 +736,59 @@ export default function ManagePage() {
 
                   return (
                     <div className="scheduleRow" key={day}>
-                      <label className="checkLabel">
-                        <input
-                          type="checkbox"
-                          checked={schedule.enabled}
-                          onChange={(event) => updateWorkingDay(day, "enabled", event.target.checked)}
+                      <div className="scheduleControls">
+                        <label className="checkLabel">
+                          <input
+                            type="checkbox"
+                            checked={schedule.enabled}
+                            onChange={(event) => updateWorkingDay(day, "enabled", event.target.checked)}
+                          />
+                          <span>{label}</span>
+                        </label>
+                        <TimeSelect24
+                          label="Mở cửa"
+                          name={`open-${day}`}
+                          value={schedule.open}
+                          onChange={(value) => updateWorkingDay(day, "open", value)}
                         />
-                        <span>{label}</span>
-                      </label>
-                      <TimeSelect24
-                        label="Mở cửa"
-                        name={`open-${day}`}
-                        value={schedule.open}
-                        onChange={(value) => updateWorkingDay(day, "open", value)}
-                      />
-                      <TimeSelect24
-                        label="Đóng cửa"
-                        name={`close-${day}`}
-                        value={schedule.close}
-                        onChange={(value) => updateWorkingDay(day, "close", value)}
-                      />
-                      <TimeSelect24
-                        label="Bắt đầu nghỉ"
-                        name={`break-start-${day}`}
-                        value={schedule.breakStart}
-                        onChange={(value) => updateWorkingDay(day, "breakStart", value)}
-                      />
-                      <TimeSelect24
-                        label="Kết thúc nghỉ"
-                        name={`break-end-${day}`}
-                        value={schedule.breakEnd}
-                        onChange={(value) => updateWorkingDay(day, "breakEnd", value)}
-                      />
+                        <TimeSelect24
+                          label="Đóng cửa"
+                          name={`close-${day}`}
+                          value={schedule.close}
+                          onChange={(value) => updateWorkingDay(day, "close", value)}
+                        />
+                        <TimeSelect24
+                          label="Bắt đầu nghỉ"
+                          name={`break-start-${day}`}
+                          value={schedule.breakStart}
+                          onChange={(value) => updateWorkingDay(day, "breakStart", value)}
+                        />
+                        <TimeSelect24
+                          label="Kết thúc nghỉ"
+                          name={`break-end-${day}`}
+                          value={schedule.breakEnd}
+                          onChange={(value) => updateWorkingDay(day, "breakEnd", value)}
+                        />
+                      </div>
+                      {schedule.enabled && (
+                        <div className="slotCapacityGrid" aria-label={`Số khách từng ca ${label}`}>
+                          {getWorkingDayBookableTimes(schedule).map((time) => (
+                            <label className="slotCapacityItem" key={`${day}-${time}`}>
+                              <span>{time}</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                inputMode="numeric"
+                                value={schedule.slotCapacities?.[time] ? String(schedule.slotCapacities[time]) : ""}
+                                placeholder={String(slotCapacity)}
+                                onChange={(event) => updateSlotCapacityOverride(day, time, event.target.value)}
+                                aria-label={`Số khách tối đa ca ${time} ${label}`}
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

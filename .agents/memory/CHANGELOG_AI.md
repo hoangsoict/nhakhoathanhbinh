@@ -1,5 +1,22 @@
 # AI Changelog
 
+## 2026-07-04 - Per-Slot Schedule Capacity
+
+### Changed
+
+- Added optional `weekly_schedule[*].slotCapacities` overrides keyed by 30-minute slot time.
+- Admin schedule UI now shows generated 30-minute slot capacity inputs for each enabled working day.
+- Empty per-slot inputs fall back to the default `slot_capacity`.
+- Public availability, booking, and reschedule capacity checks now use the per-slot override when present.
+- Updated `supabase/schema.sql` default `weekly_schedule` JSON to include `slotCapacities`.
+- Updated session memory and decisions.
+
+### Validation
+
+- `npm run lint`
+- `npm run build`
+- Dev server started successfully at `http://localhost:3003`.
+
 ## 2026-07-03 - Document Dev Server Runbook
 
 ### Changed
