@@ -5,6 +5,8 @@
 - Project: appointment website for Nha Khoa Thanh Binh.
 - Public site: `/`.
 - Internal site: `/manage`.
+- Latest session startup: 2026-09-03, AI context bootstrap completed from `AGENTS.md`, project index, architecture, takeover, session state, and decisions.
+- Current task completed: public booking form now shows the appointment note on separate lines, highlights the 30-minute late cancellation warning in red, and the booking success popup bolds the booked time and date.
 - Current task completed: admin can configure per-slot customer capacity in weekly working schedules.
 - Env names standardized to `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL`, `ADMIN_PIN`.
 - Dev server runbook documented in `docs/OPERATIONS/README.md`.
@@ -32,6 +34,7 @@
 - Admin configures weekly schedule and optional per-slot capacity overrides.
 - Schedule `close` means the last bookable slot start time.
 - Admin configures internal holidays and multiple same-day internal time-offs.
+- Public booking UI warns patients to arrive 10 minutes early and says arrivals more than 30 minutes late are automatically cancelled.
 - Internal admin/staff create/edit is not limited by public date/time rules.
 - Write create/edit/cancel/status history to `appointment_history`.
 

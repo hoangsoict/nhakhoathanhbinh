@@ -91,6 +91,11 @@ button:disabled {
   line-height: 1.45;
 }
 
+.successCard p .successHighlight {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .successCard::after {
   content: "Bấm ra ngoài để đóng";
   color: var(--muted);
@@ -450,7 +455,8 @@ textarea {
   align-self: end;
   margin: 0;
   min-height: 44px;
-  display: flex;
+  display: grid;
+  gap: 2px;
   align-items: center;
   padding: 10px 12px;
   color: var(--warn);
@@ -459,6 +465,10 @@ textarea {
   border-radius: 8px;
   font-weight: 700;
   line-height: 1.35;
+}
+
+.lateCancellationNote {
+  color: var(--danger);
 }
 
 .wide {

@@ -1,5 +1,49 @@
 # AI Changelog
 
+## 2026-09-03 - Booking Notice Formatting
+
+### Changed
+
+- Split the public booking note onto separate lines after `Lưu ý:` and after the 10-minute arrival reminder.
+- Highlighted the 30-minute late cancellation sentence in red.
+- Bolded the appointment time and date in the successful booking popup.
+
+### Validation
+
+- `env PATH=/t24/nhakhoathanhbinh/.tools/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin npm run lint`
+- `env PATH=/t24/nhakhoathanhbinh/.tools/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin npm run build`
+
+## 2026-09-03 - Public Booking Confirmation Copy
+
+### Changed
+
+- Updated the public booking form note to say patients should arrive 10 minutes early and that arrivals more than 30 minutes late are automatically cancelled.
+- Updated the booking success popup to include the confirmed appointment time and date.
+
+### Validation
+
+- `env PATH=/t24/nhakhoathanhbinh/.tools/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin npm run lint`
+- `env PATH=/t24/nhakhoathanhbinh/.tools/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin npm run build`
+
+## 2026-09-03 - AI Context Session Startup
+
+### Changed
+
+- Bootstrapped the session by reading the required AI context files:
+  - `AGENTS.md`
+  - `.agents/PROJECT_INDEX.md`
+  - `.agents/ARCHITECTURE.md`
+  - `.agents/TAKEOVER.md`
+  - `.agents/memory/SESSION_STATE.md`
+  - `.agents/memory/DECISIONS.md`
+- Also checked `.agents/memory/OPEN_QUESTIONS.md` and documentation rules during startup.
+- Updated session memory to record the context bootstrap.
+
+### Notes
+
+- No source-code behavior changed.
+- No business rules changed.
+
 ## 2026-07-04 - Per-Slot Schedule Capacity
 
 ### Changed

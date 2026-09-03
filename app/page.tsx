@@ -18,6 +18,11 @@ import {
 
 type Tab = "booking" | "lookup";
 type ApiState = { type: "idle" | "success" | "error"; message: string };
+type SuccessPopupContent = {
+  message: string;
+  appointmentTime?: string;
+  appointmentDate?: string;
+};
 type AppointmentSlot = {
   time: string;
   bookedCount: number;
@@ -52,7 +57,7 @@ export default function Home() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [actionLoadingMessage, setActionLoadingMessage] = useState("");
-  const [successPopupMessage, setSuccessPopupMessage] = useState("");
+  const [successPopupContent, setSuccessPopupContent] = useState<SuccessPopupContent | null>(null);
 
   const heroImageUrls = useMemo(() => {
     return homepageContent.heroSlides.length ? homepageContent.heroSlides.map((slide) => slide.imageUrl) : [homepageContent.heroImageUrl];
@@ -179,6 +184,15 @@ export default function Home() {
         setActionLoadingMessage("");
         return;
       }
+
+      const appointment = result.appointment as Appointment | undefined;
+      const appointmentTime = appointment?.appointment_time?.slice(0, 5) || String(form.get("appointmentTime") ?? "");
+      const appointmentDate = formatDisplayDate(appointment?.appointment_date || String(form.get("appointmentDate") ?? ""));
+      setSuccessPopupContent({
+        message: "Bạn đặt lịch thành công",
+        appointmentTime,
+        appointmentDate
+      });
     } catch {
       setBookingState({ type: "error", message: "Không thể kết nối để đặt lịch. Vui lòng thử lại." });
       setIsBookingSubmitting(false);
@@ -192,7 +206,6 @@ export default function Home() {
     setIsBookingSubmitting(false);
     setActionLoadingMessage("");
     setBookingState({ type: "idle", message: "" });
-    setSuccessPopupMessage("Lịch khám đã được ghi nhận");
   }
 
   async function lookup(phone = lookupPhone) {
@@ -211,7 +224,7 @@ export default function Home() {
     const message = result.appointments.length ? "Đã tìm thấy lịch hẹn" : "Chưa có lịch hẹn cho số điện thoại này";
     setLookupState({ type: "success", message });
     setActionLoadingMessage("");
-    setSuccessPopupMessage(message);
+    setSuccessPopupContent({ message });
   }
 
   async function handleLookup(event: FormEvent<HTMLFormElement>) {
@@ -245,7 +258,7 @@ export default function Home() {
     setLookupState({ type: "success", message: "Lịch hẹn đã được cập nhật" });
     await lookup();
     setActionLoadingMessage("");
-    setSuccessPopupMessage("Lịch hẹn đã được cập nhật");
+    setSuccessPopupContent({ message: "Lịch hẹn đã được cập nhật" });
   }
 
   async function cancelAppointment(appointmentId: string) {
@@ -266,7 +279,7 @@ export default function Home() {
     setLookupState({ type: "success", message: "Lịch hẹn đã được hủy" });
     await lookup();
     setActionLoadingMessage("");
-    setSuccessPopupMessage("Lịch hẹn đã được hủy");
+    setSuccessPopupContent({ message: "Lịch hẹn đã được hủy" });
   }
 
   function switchTab(targetTab: Tab) {
@@ -288,7 +301,7 @@ export default function Home() {
         </div>
       ) : null}
       {actionLoadingMessage && <BlockingOverlay message={actionLoadingMessage} />}
-      {successPopupMessage && <SuccessPopup message={successPopupMessage} onClose={() => setSuccessPopupMessage("")} />}
+      {successPopupContent && <SuccessPopup content={successPopupContent} onClose={() => setSuccessPopupContent(null)} />}
       <nav className="siteHeader">
         <div className="brand">
           {homepageContent.logoUrl ? (
@@ -384,7 +397,11 @@ export default function Home() {
               }
               required
             />
-            <p className="appointmentTimeNote">Lưu ý: Bệnh nhân đến trước lịch hẹn 10 phút</p>
+            <p className="appointmentTimeNote">
+              <span>Lưu ý:</span>
+              <span>Bệnh nhân đến trước lịch hẹn 10 phút.</span>
+              <span className="lateCancellationNote">Đến muộn sau 30 phút thì lịch tự động hủy.</span>
+            </p>
             {bookingSlotsState.message && <p className="slotHint">{bookingSlotsState.message}</p>}
             <PurposeOptions className="wide" defaultValue="new_treatment" />
             <FormMessage state={bookingState} />
@@ -451,6 +468,15 @@ export default function Home() {
 
 function canCustomerEditAppointment(appointment: Appointment) {
   return appointment.status === "booked" && appointmentStartsAt(appointment.appointment_date, appointment.appointment_time).getTime() > Date.now();
+}
+
+function formatDisplayDate(date: string) {
+  const [year, month, day] = date.split("-");
+  if (!year || !month || !day) {
+    return date;
+  }
+
+  return `${day}/${month}/${year}`;
 }
 
 function EditableAppointmentForm({
@@ -694,12 +720,22 @@ function BlockingOverlay({ message }: { message: string }) {
   );
 }
 
-function SuccessPopup({ message, onClose }: { message: string; onClose: () => void }) {
+function SuccessPopup({ content, onClose }: { content: SuccessPopupContent; onClose: () => void }) {
   return (
     <div className="successDialog" role="dialog" aria-modal="true" aria-label="Thông báo thành công" onClick={onClose}>
       <div className="successCard" onClick={(event) => event.stopPropagation()}>
         <strong>Thành công</strong>
-        <p>{message}</p>
+        <p>
+          {content.message}
+          {content.appointmentTime && content.appointmentDate ? (
+            <>
+              {" lúc "}
+              <strong className="successHighlight">{content.appointmentTime}</strong>
+              {" ngày "}
+              <strong className="successHighlight">{content.appointmentDate}</strong>
+            </>
+          ) : null}
+        </p>
       </div>
     </div>
   );
