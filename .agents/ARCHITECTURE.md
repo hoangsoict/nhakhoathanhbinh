@@ -13,6 +13,8 @@
 
 - `app/page.tsx`: homepage, image slider, clinic info, booking form, phone lookup/edit/cancel.
 - `app/manage/page.tsx`: staff login, appointments, schedule settings, homepage settings, `maintain` users.
+- `app/manage/reports-panel.tsx`: admin/maintain no-show/repeat-booking reports with a maximum one-month date range and CSV export.
+- `lib/reports.ts`: report validation, phone grouping, Vietnam time formatting and CSV generation.
 - `app/globals.css`: shared public and manage styles.
 
 ## API Route
@@ -23,6 +25,7 @@
 - `app/api/admin/settings/route.ts`: internal settings read/save.
 - `app/api/admin/session/route.ts`: internal login/session.
 - `app/api/admin/users/route.ts`: admin `maintain` user management.
+- `app/api/admin/reports/route.ts`: admin/maintain reports, keyset pagination, inclusive appointment-date filtering and maximum one-month range for both reports.
 - `app/api/settings/homepage/route.ts`: public homepage content.
 
 ## Supabase Database

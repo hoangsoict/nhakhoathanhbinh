@@ -2,10 +2,14 @@
 
 ## Current State
 
+- Local test runtime (2026-09-21): production build passed; `npm run start -- --hostname 0.0.0.0 -p 3002` started successfully. `/manage` returned HTTP 200 at `http://localhost:3002/manage`.
+- Active development branch: `feature/reports`, created from local `main` on 2026-09-21.
+- Git handoff: user requested committing/pushing the reporting changes to `origin/feature/reports` on 2026-09-21; publication result is verified through Git remote tracking.
+- Done: `admin` and `maintain` can view/export `/manage` no-show and repeat-booking reports. Both reports filter by appointment date, including both endpoints, with a maximum one-calendar-month range enforced in UI and API (e.g. September 5–October 4; month-end capped to the following month's last day). No-shows require `no_show`; repeat bookings include all statuses and show creation timestamps in Vietnam time.
 - Project: appointment website for Nha Khoa Thanh Binh.
 - Public site: `/`.
 - Internal site: `/manage`.
-- Latest session startup: 2026-09-03, AI context bootstrap completed from `AGENTS.md`, project index, architecture, takeover, session state, and decisions.
+- Latest session startup: 2026-09-21, AI context bootstrap completed from `AGENTS.md`, project index, architecture, takeover, session state, and decisions; also reviewed open questions, documentation rules, and the startup workflow. Working tree was clean before startup memory updates. Awaiting the next concrete task.
 - Current task completed: public booking form now shows the appointment note on separate lines, highlights the 30-minute late cancellation warning in red, and the booking success popup bolds the booked time and date.
 - Current task completed: admin can configure per-slot customer capacity in weekly working schedules.
 - Env names standardized to `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL`, `ADMIN_PIN`.
@@ -63,7 +67,7 @@
 - Add UI for audit history.
 - Add OTP/phone verification if required.
 - Add public API rate limiting.
-- Add automated tests.
+- Expand automated tests beyond reporting helper coverage.
 - Run updated `supabase/schema.sql` on production Supabase if not already applied.
 - Rotate Supabase service/secret keys if any real key was exposed in chat.
 

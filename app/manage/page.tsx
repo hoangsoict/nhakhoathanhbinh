@@ -2,6 +2,7 @@
 
 import { ClipboardList, ImageUp, Settings, ShieldCheck, Trash2, Users } from "lucide-react";
 import Image from "next/image";
+import ReportsPanel from "./reports-panel";
 import type { FormEvent, InputHTMLAttributes } from "react";
 import { useMemo, useState } from "react";
 import {
@@ -24,7 +25,7 @@ import {
 } from "@/lib/appointments";
 
 type Role = "admin" | "maintain";
-type AdminSection = "appointments" | "settings" | "homepage" | "users";
+type AdminSection = "appointments" | "reports" | "settings" | "homepage" | "users";
 type ApiState = { type: "idle" | "success" | "error"; message: string };
 type MaintainUser = {
   id: string;
@@ -662,6 +663,10 @@ export default function ManagePage() {
               <ClipboardList aria-hidden="true" />
               Danh sách đặt lịch
             </button>
+            <button className={section === "reports" ? "active" : ""} onClick={() => setSection("reports")}>
+                  <ClipboardList aria-hidden="true" />
+                  Báo cáo
+            </button>
             {isAdmin && (
               <>
                 <button className={section === "settings" ? "active" : ""} onClick={() => setSection("settings")}>
@@ -703,6 +708,8 @@ export default function ManagePage() {
               <AppointmentTable groups={appointmentGroups} onStatusChange={setAppointmentStatus} />
             </>
           )}
+
+          {section === "reports" && <ReportsPanel token={token} />}
 
           {isAdmin && section === "settings" && (
             <form className="settingsPanel" onSubmit={saveSettings}>

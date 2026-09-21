@@ -35,6 +35,11 @@
 
 ## Data
 
+- Both reports filter by appointment date, including the selected start and end dates (confirmed by user). Creation timestamps are displayed as details, not used for date filtering.
+
+- Reporting customers are identified by phone number. Repeat bookings mean more than one appointment record in the selected range; editing a record does not create a new booking count.
+- Reporting UI and API allow `admin` and `maintain`; CSV export includes detailed booking timestamps and current appointment information.
+- Report ranges are limited to one calendar month for both roles and report types, inclusive (e.g. September 5–October 4), capped at the following month's last day when needed. Enforce in both UI and API.
 - `appointments.created_at` is the actual booking time and same-slot ordering key.
 - `appointment_history` stores audit snapshots.
 - `clinic_settings` stores schedule, per-slot capacity overrides, holidays, homepage, default slot capacity, and booking advance days.

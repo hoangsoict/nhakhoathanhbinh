@@ -1,5 +1,46 @@
 # AI Changelog
 
+## 2026-09-21 - Reporting Git Handoff
+
+- Prepared reporting implementation, tests and AI context for the user-requested commit/push to `origin/feature/reports`.
+- Prior validation passed: lint, production build, 5 reporting tests, local HTTP checks and diff checks.
+
+## 2026-09-21 - Maintain Reports and One-Month Limit
+
+- Enabled report navigation, viewing and CSV export for both `admin` and `maintain`; API checks both staff roles.
+- Applied shared calendar-month validation to UI and API for both reports; end-date picker reflects the maximum allowed date.
+- Added tests covering exact limits, over-limit rejection, leap years and year rollover.
+- Validation: lint, production build, 5 reporting tests and diff checks passed. Restarted local production server on port 3002; `/manage` returns 200 and unauthenticated reports return 401. Authenticated browser testing remains for the user.
+
+## 2026-09-21 - Local Reporting Test Server
+
+- Built the current `feature/reports` branch successfully with `npm run build`.
+- Started the production server on `0.0.0.0:3002` for user testing.
+- Verified `http://localhost:3002/manage` returns HTTP 200.
+
+## 2026-09-21 - Appointment Reports
+
+- Added an admin-only Reports tab and authenticated `/api/admin/reports` endpoint.
+- Both reports use the inclusive appointment-date range as requested. No-show report requires `no_show`; repeat-booking report groups by phone and includes all statuses, showing creation timestamps in Vietnam time.
+- Show each booking's name, phone, creation timestamp, appointment date/time, purpose and current status; export the displayed result as UTF-8 CSV with formula protection.
+- Fetch all matching records using keyset pagination rather than the appointment list's 200-row limit.
+- Added reporting tests for validation, grouping, status filtering, CSV safety and Vietnam timestamp formatting.
+- Validation: lint, production build, compiled Node reporting tests and `git diff --check`. Live Supabase/browser validation remains outstanding.
+- No schema migration, commit or push.
+
+## 2026-09-21 - Reporting Development Branch
+
+- Created and switched to `feature/reports` from local `main`.
+- Preserved existing uncommitted session context updates.
+- Reporting implementation has not started; no commit or push performed.
+
+## 2026-09-21 - AI Context Session Startup
+
+- Read all six required entrypoint/context files in order.
+- Reviewed open questions, documentation rules, and the session startup workflow.
+- Confirmed the working tree was clean before updating session memory.
+- No source code or business rules changed; no new decisions or questions.
+
 ## 2026-09-03 - Booking Notice Formatting
 
 ### Changed

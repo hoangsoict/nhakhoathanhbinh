@@ -23,6 +23,7 @@
 - `app/`: Next.js App Router, UI, API route.
 - `app/page.tsx`: public customer UI.
 - `app/manage/page.tsx`: internal `/manage` UI.
+- `app/manage/reports-panel.tsx`, `app/api/admin/reports/route.ts`, `lib/reports.ts`: admin/maintain date-range reports and CSV export, limited to one month.
 - `app/api/appointments/`: public booking, lookup, edit, cancel, availability.
 - `app/api/admin/`: internal appointments, settings, session, users.
 - `app/api/settings/homepage/route.ts`: public homepage settings API.
