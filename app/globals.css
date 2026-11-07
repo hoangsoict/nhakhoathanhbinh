@@ -93,7 +93,18 @@ button:disabled {
 
 .successCard p .successHighlight {
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 700;
+}
+
+.successCard p .holidayHighlight,
+.slotHint .holidayHighlight {
+  color: #c62828;
+  font-weight: 700;
+}
+
+.slotHint .successHighlight {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .successCard::after {

@@ -4,6 +4,7 @@ import {
   getSlotCapacityForTime,
   getScheduleForDate,
   isAppointmentInFuture,
+  internalHolidayMessage,
   isInternalHoliday,
   isWithinInternalTimeOff,
   isWithinAllowedAppointmentDates,
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isInternalHoliday(settings.internalHolidays, date)) {
-      return NextResponse.json({ slots: [], reason: "Ngày khám là ngày nghỉ nội bộ của phòng khám" });
+      return NextResponse.json({ slots: [], reason: internalHolidayMessage(date), holiday: true });
     }
 
     const workingDay = getScheduleForDate(settings.weeklySchedule, date);

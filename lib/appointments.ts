@@ -186,6 +186,21 @@ export function isInternalHoliday(internalHolidays: string[], date: string) {
   return internalHolidays.includes(date);
 }
 
+const weekdayNames = ["Chủ nhật", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy"];
+
+export function getWeekdayLabel(date: string) {
+  return weekdayNames[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? "";
+}
+
+export function internalHolidayMessage(date: string) {
+  const [year, month, day] = date.split("-");
+  const weekday = getWeekdayLabel(date);
+  const displayDate = year && month && day ? `${day}/${month}/${year}` : date;
+  const dayLabel = weekday ? `${displayDate} ${weekday}` : displayDate;
+
+  return `Ngày ${dayLabel} là ngày nghỉ nội bộ của phòng khám. Mọi vấn đề cấp thiết xin liên hệ qua số điện thoại phòng khám`;
+}
+
 export function validateInternalTimeOffs(value: unknown): InternalTimeOff[] {
   if (!Array.isArray(value)) {
     return [];

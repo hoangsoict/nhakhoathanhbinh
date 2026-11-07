@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   isAppointmentInFuture,
+  internalHolidayMessage,
   isInternalHoliday,
   isThirtyMinuteSlot,
   getScheduleForDate,
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isInternalHoliday(settings.internalHolidays, appointmentDate)) {
-      return jsonError("Ngày khám là ngày nghỉ nội bộ của phòng khám", 409);
+      return jsonError(internalHolidayMessage(appointmentDate), 409);
     }
 
     if (isWithinInternalTimeOff(settings.internalTimeOffs, appointmentDate, appointmentTime)) {
@@ -246,7 +247,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (isInternalHoliday(settings.internalHolidays, appointmentDate)) {
-      return jsonError("Ngày khám là ngày nghỉ nội bộ của phòng khám", 409);
+      return jsonError(internalHolidayMessage(appointmentDate), 409);
     }
 
     if (isWithinInternalTimeOff(settings.internalTimeOffs, appointmentDate, appointmentTime)) {

@@ -9,6 +9,7 @@ import {
   defaultBookingAdvanceDays,
   defaultHomepageContent,
   getAllowedAppointmentDates,
+  getWeekdayLabel,
   appointmentStartsAt,
   type Appointment,
   type AppointmentPurpose,
@@ -17,11 +18,15 @@ import {
 } from "@/lib/appointments";
 
 type Tab = "booking" | "lookup";
-type ApiState = { type: "idle" | "success" | "error"; message: string };
+type ApiState = { type: "idle" | "success" | "error"; message: string; holiday?: boolean };
 type SuccessPopupContent = {
+  title?: string;
   message: string;
   appointmentTime?: string;
   appointmentDate?: string;
+  appointmentWeekday?: string;
+  phone?: string;
+  holidayDate?: string;
 };
 type AppointmentSlot = {
   time: string;
@@ -118,10 +123,15 @@ export default function Home() {
           return;
         }
 
+        if (result.holiday && result.reason) {
+          setSuccessPopupContent({ title: "Thông báo", message: result.reason, holidayDate: selectedBookingDate });
+        }
+
         setBookingSlots(result.slots ?? []);
         setBookingSlotsState({
           type: "idle",
-          message: result.reason ?? ((result.slots ?? []).length ? "" : "Không còn giờ khám phù hợp trong ngày này")
+          message: result.reason ?? ((result.slots ?? []).length ? "" : "Không còn giờ khám phù hợp trong ngày này"),
+          holiday: Boolean(result.holiday)
         });
       } catch {
         if (!ignore) {
@@ -187,11 +197,13 @@ export default function Home() {
 
       const appointment = result.appointment as Appointment | undefined;
       const appointmentTime = appointment?.appointment_time?.slice(0, 5) || String(form.get("appointmentTime") ?? "");
-      const appointmentDate = formatDisplayDate(appointment?.appointment_date || String(form.get("appointmentDate") ?? ""));
+      const rawDate = appointment?.appointment_date || String(form.get("appointmentDate") ?? "");
       setSuccessPopupContent({
-        message: "Bạn đặt lịch thành công",
+        message: "Bạn đã đặt hẹn thành công",
+        phone: String(form.get("phone") ?? ""),
         appointmentTime,
-        appointmentDate
+        appointmentWeekday: getWeekdayLabel(rawDate),
+        appointmentDate: formatDisplayDate(rawDate)
       });
     } catch {
       setBookingState({ type: "error", message: "Không thể kết nối để đặt lịch. Vui lòng thử lại." });
@@ -402,7 +414,11 @@ export default function Home() {
               <span>Bệnh nhân đến trước lịch hẹn 10 phút.</span>
               <span className="lateCancellationNote">Đến muộn sau 30 phút thì lịch tự động hủy.</span>
             </p>
-            {bookingSlotsState.message && <p className="slotHint">{bookingSlotsState.message}</p>}
+            {bookingSlotsState.message && (
+              <p className="slotHint">
+                <span>{bookingSlotsState.holiday ? <HolidayNotice date={selectedBookingDate} /> : bookingSlotsState.message}</span>
+              </p>
+            )}
             <PurposeOptions className="wide" defaultValue="new_treatment" />
             <FormMessage state={bookingState} />
             <button className="primaryAction" type="submit" disabled={isBookingSubmitting}>
@@ -530,7 +546,8 @@ function EditableAppointmentForm({
         setSlots(result.slots ?? []);
         setSlotsState({
           type: "idle",
-          message: result.reason ?? ((result.slots ?? []).length ? "" : "Không còn giờ khám phù hợp trong ngày này")
+          message: result.reason ?? ((result.slots ?? []).length ? "" : "Không còn giờ khám phù hợp trong ngày này"),
+          holiday: Boolean(result.holiday)
         });
       } catch {
         if (!ignore) {
@@ -577,7 +594,11 @@ function EditableAppointmentForm({
         }
         required
       />
-      {slotsState.message && <p className="slotHint">{slotsState.message}</p>}
+      {slotsState.message && (
+        <p className="slotHint">
+          <span>{slotsState.holiday ? <HolidayNotice date={selectedDate} /> : slotsState.message}</span>
+        </p>
+      )}
       <PurposeOptions defaultValue={appointment.purpose} />
       <div className="buttonRow">
         <button type="submit">Cập nhật</button>
@@ -720,22 +741,49 @@ function BlockingOverlay({ message }: { message: string }) {
   );
 }
 
+function HolidayNotice({ date }: { date: string }) {
+  return (
+    <>
+      {"Ngày "}
+      <strong className="successHighlight">
+        {formatDisplayDate(date)} {getWeekdayLabel(date)}
+      </strong>
+      {" là "}
+      <strong className="holidayHighlight">ngày nghỉ nội bộ</strong>
+      {" của phòng khám. Mọi vấn đề cấp thiết xin liên hệ qua số điện thoại phòng khám"}
+    </>
+  );
+}
+
 function SuccessPopup({ content, onClose }: { content: SuccessPopupContent; onClose: () => void }) {
   return (
-    <div className="successDialog" role="dialog" aria-modal="true" aria-label="Thông báo thành công" onClick={onClose}>
+    <div className="successDialog" role="dialog" aria-modal="true" aria-label={content.title ?? "Thông báo thành công"} onClick={onClose}>
       <div className="successCard" onClick={(event) => event.stopPropagation()}>
-        <strong>Thành công</strong>
-        <p>
-          {content.message}
-          {content.appointmentTime && content.appointmentDate ? (
-            <>
-              {" lúc "}
-              <strong className="successHighlight">{content.appointmentTime}</strong>
-              {" ngày "}
-              <strong className="successHighlight">{content.appointmentDate}</strong>
-            </>
-          ) : null}
-        </p>
+        <strong>{content.title ?? "Thành công"}</strong>
+        {content.holidayDate ? (
+          <p>
+            <HolidayNotice date={content.holidayDate} />
+          </p>
+        ) : content.appointmentTime && content.appointmentDate ? (
+          <p>
+            {content.message}
+            {content.phone ? (
+              <>
+                {" bằng số điện thoại "}
+                <strong className="successHighlight">{content.phone}</strong>
+              </>
+            ) : null}
+            {" lúc "}
+            <strong className="successHighlight">{content.appointmentTime}</strong>
+            {", "}
+            {content.appointmentWeekday ? <strong className="successHighlight">{content.appointmentWeekday}</strong> : null}
+            {" ngày "}
+            <strong className="successHighlight">{content.appointmentDate}</strong>
+            {". Trân trọng cảm ơn"}
+          </p>
+        ) : (
+          <p>{content.message}</p>
+        )}
       </div>
     </div>
   );
