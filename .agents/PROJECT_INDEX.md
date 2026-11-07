@@ -32,13 +32,13 @@
 - `lib/supabase.ts`: Supabase admin client.
 - `supabase/schema.sql`: idempotent schema/migration.
 - `docs/URD/`: Vietnamese business requirements.
-- `.agents/`: AI context, rules, skills, workflows, memory.
+- `.agents/`: AI context, rules, workflows, memory. `.claude/`: Claude Code skills.
 
 ## Context By Task
 
-- Next.js/API/Supabase/Vercel: `.agents/skills/nextjs-supabase-web/SKILL.md`
-- Clinic booking logic: `.agents/skills/clinic-booking-business/SKILL.md`
-- URD writing/review: `.agents/skills/ba-urd-writing/SKILL.md`
+- Next.js/API/Supabase/Vercel: `.claude/skills/nextjs-supabase-web/SKILL.md`
+- Clinic booking logic: `.claude/skills/clinic-booking-business/SKILL.md`
+- URD writing/review: `.claude/skills/ba-urd-writing/SKILL.md`
 - Code changes: `.agents/rules/CODING_RULES.md`, `.agents/rules/SECURITY_RULES.md`, `.agents/workflows/BEFORE_CHANGE.md`
 - Git/commit/push: `.agents/rules/GIT_RULES.md`
 - Documentation/context: `.agents/rules/DOCUMENTATION_RULES.md`

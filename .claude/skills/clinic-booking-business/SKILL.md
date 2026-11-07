@@ -1,4 +1,7 @@
-# Skill: Clinic Booking Business
+---
+name: clinic-booking-business
+description: Quy tắc nghiệp vụ đặt lịch phòng khám: slot, capacity, lịch làm việc, ngày nghỉ, trạng thái lịch hẹn, tra cứu/sửa/hủy theo số điện thoại, vai trò admin/maintain, lịch sử audit. Dùng khi sửa hoặc kiểm tra logic đặt lịch.
+---
 
 ## Use When
 

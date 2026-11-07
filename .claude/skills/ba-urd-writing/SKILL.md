@@ -1,4 +1,7 @@
-# Skill: BA URD Writing
+---
+name: ba-urd-writing
+description: Viết, rà soát hoặc chuẩn hóa tài liệu URD/yêu cầu người dùng bằng tiếng Việt cho website Nha Khoa Thanh Bình (docs/URD, docs/DESIGN, docs/OPERATIONS). Dùng khi người dùng nhắc tới URD, yêu cầu nghiệp vụ, tài liệu BA.
+---
 
 ## Use When
 

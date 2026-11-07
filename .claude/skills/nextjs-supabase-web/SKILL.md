@@ -1,4 +1,7 @@
-# Skill: Next.js Supabase Web
+---
+name: nextjs-supabase-web
+description: Checklist làm việc với Next.js App Router, API route, Supabase (DB/Storage), biến môi trường và triển khai Vercel của dự án nhakhoathanhbinh. Dùng khi sửa API, env, schema, storage hoặc deploy.
+---
 
 ## Use When
 
